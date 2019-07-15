@@ -9,6 +9,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -ggdb -fsanitize=address,undefined,leak")
 
 set (src
 	src/main.cpp
+	src/core/database.cpp
+	src/core/scanner.cpp
 )
 
 add_executable(nothing ${src})
