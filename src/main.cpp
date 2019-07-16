@@ -10,10 +10,15 @@ int main(int argc, char **argv)
 	Scanner scanner{&db};
 	if (argc > 1) {
 		for (int i = 1; i < argc; ++i) {
-			if (!scanner.addPath(argv[i])) {
-				fprintf(stderr, "Failed to add the path: %s\n", argv[i]);
-			} else {
-				printf("Added %s\n", argv[i]);
+			auto result = scanner.addPath(argv[i]);
+			if (result == Scanner::AddPathResult::PathDoesNotExist) {
+				fprintf(stderr, "Failed to add path %s, reason: path does not exist.\n", argv[i]);
+			} else if (result == Scanner::AddPathResult::PathNotDirectory) {
+				fprintf(stderr, "Failed to add path %s, reason: path not a directory.\n", argv[i]);
+			} else if (result == Scanner::AddPathResult::PathAlreadyAdded) {
+				fprintf(stderr, "Failed to add path %s, reason: path already added.\n", argv[i]);
+			} else if (result == Scanner::AddPathResult::Ok) {
+				printf("Added %s.\n", argv[i]);
 			}
 		}
 	}

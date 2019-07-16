@@ -87,20 +87,20 @@ void Scanner::workerTask(const std::string &path)
 	}
 }
 
-bool Scanner::addPath(const std::string &path)
+Scanner::AddPathResult Scanner::addPath(const std::string &path)
 {
 	namespace fs = std::filesystem;
 
 	if (!fs::exists(path)) {
-		return false;
+		return AddPathResult::PathDoesNotExist;
 	}
 
 	if (!fs::is_directory(path)) {
-		return false;
+		return AddPathResult::PathNotDirectory;
 	}
 
 	if (std::find(paths.begin(), paths.end(), path) != paths.end()) {
-		return false;
+		return AddPathResult::PathAlreadyAdded;
 	}
 
 	paths.push_back(path);
@@ -109,19 +109,19 @@ bool Scanner::addPath(const std::string &path)
 		enqueue(path);
 	}
 
-	return true;
+	return AddPathResult::Ok;
 }
 
 void Scanner::enqueue(const std::string &path)
 {
-		std::lock_guard<std::mutex> lock{mutex};
+	std::lock_guard<std::mutex> lock{mutex};
 
-		if (std::find(queue.begin(), queue.end(), path) != queue.end()) {
-			return;
-		}
+	if (std::find(queue.begin(), queue.end(), path) != queue.end()) {
+		return;
+	}
 
-		queue.push_back(path);
-		cv.notify_one();
+	queue.push_back(path);
+	cv.notify_one();
 }
 
 bool Scanner::isRunning() const

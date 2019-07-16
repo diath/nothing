@@ -13,6 +13,14 @@ class Database;
 class Scanner
 {
 	public:
+		enum class AddPathResult
+		{
+			PathDoesNotExist,
+			PathNotDirectory,
+			PathAlreadyAdded,
+			Ok,
+		};
+
 		Scanner(const Database *database);
 		~Scanner();
 
@@ -28,7 +36,7 @@ class Scanner
 		void worker();
 		void workerTask(const std::string &path);
 
-		bool addPath(const std::string &path);
+		AddPathResult addPath(const std::string &path);
 		void enqueue(const std::string &path);
 
 		bool isRunning() const;
