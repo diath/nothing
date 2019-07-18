@@ -1,9 +1,13 @@
 #include <algorithm>
 #include <filesystem>
 
-#include "scanner.hpp"
+#include <chrono>
 
-Scanner::Scanner(const Database *database)
+
+#include "scanner.hpp"
+#include "database.hpp"
+
+Scanner::Scanner(Database *database)
 : database{database}
 {
 }
@@ -83,7 +87,12 @@ void Scanner::workerTask(const std::string &path)
 			break;
 		}
 
-		(void) entry;
+		if (entry.is_directory()) {
+			continue;
+		}
+
+		auto &path = entry.path();
+		database->addEntry(path.filename().string(), path.parent_path().string());
 	}
 }
 

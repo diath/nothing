@@ -21,7 +21,7 @@ class Scanner
 			Ok,
 		};
 
-		Scanner(const Database *database);
+		Scanner(Database *database);
 		~Scanner();
 
 		Scanner(const Scanner &) = delete;
@@ -42,7 +42,7 @@ class Scanner
 		bool isRunning() const;
 
 	private:
-		const Database *database = nullptr;
+		Database *database = nullptr;
 
 		std::atomic<bool> running = false;
 		std::vector<std::string> paths{};
