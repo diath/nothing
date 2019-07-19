@@ -3,12 +3,16 @@
 
 #include <mutex>
 #include <string>
+#include <tuple>
+#include <vector>
 
 #include <sqlite3.h>
 
 class Database
 {
 	public:
+		using Entry = std::tuple<std::string, std::string>;
+
 		Database();
 		~Database();
 
@@ -18,7 +22,8 @@ class Database
 		Database &operator =(const Database &) = delete;
 		Database &operator =(Database &&) = delete;
 
-		void addEntry(const std::string &file, const std::string &path);
+		void addEntry(const Entry &entry);
+		void addEntries(const std::vector<Entry> &entries);
 
 	private:
 		sqlite3 *handle = nullptr;

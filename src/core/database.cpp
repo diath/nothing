@@ -31,7 +31,7 @@ Database::~Database()
 	sqlite3_shutdown();
 }
 
-void Database::addEntry(const std::string &name, const std::string &path)
+void Database::addEntry(const Entry &entry)
 {
 	std::unique_lock<std::mutex> lock{mutex};
 
@@ -40,6 +40,8 @@ void Database::addEntry(const std::string &name, const std::string &path)
 		// TODO: Handle gracefully?
 		return;
 	}
+
+	const auto &[name, path] = entry;
 
 	if (sqlite3_bind_text(stmt, 1, name.c_str(), -1, nullptr) != SQLITE_OK) {
 		// TODO: Handle gracefully?
@@ -53,4 +55,37 @@ void Database::addEntry(const std::string &name, const std::string &path)
 
 	sqlite3_step(stmt);
 	sqlite3_finalize(stmt);
+}
+
+void Database::addEntries(const std::vector<Entry> &entries)
+{
+	std::unique_lock<std::mutex> lock{mutex};
+
+	sqlite3_exec(handle, "BEGIN TRANSACTION", nullptr, nullptr, nullptr);
+
+	sqlite3_stmt *stmt = nullptr;
+	if (sqlite3_prepare(handle, "INSERT INTO files (file, path) VALUES (?, ?);", -1, &stmt, nullptr) != SQLITE_OK) {
+		// TODO: Handle gracefully?
+		return;
+	}
+
+	for (auto &&entry: entries) {
+		const auto &[name, path] = entry;
+
+		if (sqlite3_bind_text(stmt, 1, name.c_str(), -1, nullptr) != SQLITE_OK) {
+			// TODO: Handle gracefully?
+			return;
+		}
+
+		if (sqlite3_bind_text(stmt, 2, path.c_str(), -1, nullptr) != SQLITE_OK) {
+			// TODO: Handle gracefully?
+			return;
+		}
+
+		sqlite3_step(stmt);
+		sqlite3_reset(stmt);
+	}
+
+	sqlite3_finalize(stmt);
+	sqlite3_exec(handle, "END TRANSACTION", nullptr, nullptr, nullptr);
 }

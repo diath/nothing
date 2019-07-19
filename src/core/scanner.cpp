@@ -3,9 +3,10 @@
 
 #include <chrono>
 
-
 #include "scanner.hpp"
 #include "database.hpp"
+
+namespace fs = std::filesystem;
 
 Scanner::Scanner(Database *database)
 : database{database}
@@ -80,8 +81,12 @@ void Scanner::worker()
 
 void Scanner::workerTask(const std::string &path)
 {
-	namespace fs = std::filesystem;
+	constexpr auto BatchSize = 32 * 1024u;
 
+	std::vector<Database::Entry> entries{};
+	entries.reserve(BatchSize);
+
+	std::size_t counter = 0;
 	for (auto &&entry: fs::recursive_directory_iterator{path}) {
 		if (!running) {
 			break;
@@ -92,14 +97,18 @@ void Scanner::workerTask(const std::string &path)
 		}
 
 		auto &path = entry.path();
-		database->addEntry(path.filename().string(), path.parent_path().string());
+		entries.emplace_back(path.filename().string(), path.parent_path().string());
+
+		if (++counter == BatchSize) {
+			database->addEntries(entries);
+			entries.clear();
+			counter = 0;
+		}
 	}
 }
 
 Scanner::AddPathResult Scanner::addPath(const std::string &path)
 {
-	namespace fs = std::filesystem;
-
 	if (!fs::exists(path)) {
 		return AddPathResult::PathDoesNotExist;
 	}
