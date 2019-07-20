@@ -1,6 +1,7 @@
 #ifndef NOTHING_DATABASE_HPP
 #define NOTHING_DATABASE_HPP
 
+#include <functional>
 #include <mutex>
 #include <string>
 #include <tuple>
@@ -12,6 +13,7 @@ class Database
 {
 	public:
 		using Entry = std::tuple<std::string, std::string>;
+		using QueryCallback = std::function<void(const Entry &)>;
 
 		Database();
 		~Database();
@@ -24,6 +26,8 @@ class Database
 
 		void addEntry(const Entry &entry);
 		void addEntries(const std::vector<Entry> &entries);
+
+		void query(const std::string &pattern, QueryCallback callback);
 
 	private:
 		sqlite3 *handle = nullptr;

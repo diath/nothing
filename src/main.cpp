@@ -25,17 +25,17 @@ int main(int argc, char **argv)
 
 	scanner.run();
 	std::string line{};
-	if (scanner.isRunning()) {
-		std::cin.ignore();
-		std::getline(std::cin, line);
+	while (scanner.isRunning()) {
+		std::getline(std::cin, line, '\n');
 
 		if (line == "stop") {
 			scanner.stop();
 		} else {
-			scanner.addPath(line);
+			db.query(line, [] (const auto &e) {
+				const auto &[file, _] = e;
+				printf("Received %s\n", file.c_str());
+			});
 		}
-
-		std::cin.ignore();
 	}
 
 	return 0;

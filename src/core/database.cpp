@@ -14,9 +14,9 @@ Database::Database()
 		// TODO: Terminate?
 	}
 
-	char *error_message = nullptr;
-	if (sqlite3_exec(handle, "CREATE TABLE files (file TEXT, path TEXT);", nullptr, nullptr, &error_message) != SQLITE_OK) {
-		fprintf(stderr, "[Error] Failed to create the files table: %s\n", error_message);
+	char *error = nullptr;
+	if (sqlite3_exec(handle, "CREATE TABLE files (file TEXT, path TEXT);", nullptr, nullptr, &error) != SQLITE_OK) {
+		fprintf(stderr, "[Error] Failed to create the files table: %s\n", error);
 		// TODO: Terminate?
 	}
 }
@@ -74,11 +74,13 @@ void Database::addEntries(const std::vector<Entry> &entries)
 
 		if (sqlite3_bind_text(stmt, 1, name.c_str(), -1, nullptr) != SQLITE_OK) {
 			// TODO: Handle gracefully?
+			sqlite3_finalize(stmt);
 			return;
 		}
 
 		if (sqlite3_bind_text(stmt, 2, path.c_str(), -1, nullptr) != SQLITE_OK) {
 			// TODO: Handle gracefully?
+			sqlite3_finalize(stmt);
 			return;
 		}
 
@@ -88,4 +90,38 @@ void Database::addEntries(const std::vector<Entry> &entries)
 
 	sqlite3_finalize(stmt);
 	sqlite3_exec(handle, "END TRANSACTION", nullptr, nullptr, nullptr);
+}
+
+void Database::query(const std::string &pattern, QueryCallback callback)
+{
+	sqlite3_stmt *stmt = nullptr;
+	if (sqlite3_prepare(handle, "SELECT file, path FROM files WHERE file LIKE ?;", -1, &stmt, nullptr) != SQLITE_OK) {
+		fprintf(stderr, "[Error] Failed to prepare query statement.\n");
+		return;
+	}
+
+	std::string param = "%" + pattern + "%";
+	if (sqlite3_bind_text(stmt, 1, param.c_str(), -1, nullptr) != SQLITE_OK) {
+		fprintf(stderr, "[Error] Failed to bind query parameter.\n");
+		sqlite3_finalize(stmt);
+		return;
+	}
+
+	int result = SQLITE_OK;
+	while ((result = sqlite3_step(stmt)) != SQLITE_DONE) {
+		if (result != SQLITE_ROW) {
+			fprintf(stderr, "[Error] Failed to fetch a query result.\n");
+			sqlite3_finalize(stmt);
+			return;
+		}
+
+		Entry entry{};
+		auto &[file, path] = entry;
+		file = std::string(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0)));
+		path = std::string(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1)));
+
+		callback(entry);
+	}
+
+	sqlite3_finalize(stmt);
 }
