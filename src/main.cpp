@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 		if (line == "stop") {
 			scanner.stop();
 		} else {
-			db.query(line, [] (const auto &e) {
+			db.queryRegexp(line, [] (const auto &e) {
 				const auto &[file, _] = e;
 				printf("Received %s\n", file.c_str());
 			});

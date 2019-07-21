@@ -28,6 +28,7 @@ class Database
 		void addEntries(const std::vector<Entry> &entries);
 
 		void query(const std::string &pattern, QueryCallback callback);
+		void queryRegexp(const std::string &pattern, QueryCallback callback);
 
 	private:
 		sqlite3 *handle = nullptr;
