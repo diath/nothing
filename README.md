@@ -1,6 +1,6 @@
 # nothing
 
-nothing is a FOSS clone of [everything](https://www.voidtools.com/).
+nothing is a cross-platform and open source clone of [Everything](https://www.voidtools.com/).
 
 # Contributing
 
@@ -8,4 +8,4 @@ If you would like to file a bug report, request a feature, or contribute code, f
 
 # License
 
-nothing is released under the GPLv3 license. See the [license file](LICENSE.md) for details.
+nothing is released under the MIT license. See the [license file](LICENSE.md) for details.
