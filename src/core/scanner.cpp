@@ -113,8 +113,17 @@ void Scanner::workerTask(const std::string &path)
 			continue;
 		}
 
+		std::error_code ec{};
+
 		auto &path = entry.path();
-		entries.emplace_back(path.filename().string(), path.parent_path().string());
+		auto status = entry.status();
+
+		entries.emplace_back(
+			path.filename().string(),
+			path.parent_path().string(),
+			entry.file_size(ec),
+			status.permissions()
+		);
 
 		if (++counter == BatchSize) {
 			database->addEntries(entries);

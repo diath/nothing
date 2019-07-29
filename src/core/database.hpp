@@ -18,6 +18,8 @@
 #ifndef NOTHING_DATABASE_HPP
 #define NOTHING_DATABASE_HPP
 
+#include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <mutex>
 #include <string>
@@ -29,7 +31,7 @@
 class Database
 {
 	public:
-		using Entry = std::tuple<std::string, std::string>;
+		using Entry = std::tuple<std::string, std::string, std::uintmax_t, std::filesystem::perms>;
 		using QueryCallback = std::function<void(const Entry &)>;
 
 		Database();
