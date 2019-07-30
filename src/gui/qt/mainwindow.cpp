@@ -36,8 +36,8 @@ MainWindow::MainWindow(int argc, char **argv)
 	layout->addWidget(input);
 	layout->addWidget(table);
 
-	table->setColumnCount(2);
-	table->setHorizontalHeaderLabels({"File", "Folder"});
+	table->setColumnCount(4);
+	table->setHorizontalHeaderLabels({"File", "Folder", "Size", "Perms"});
 
 	setCentralWidget(centralWidget);
 
@@ -82,7 +82,7 @@ void MainWindow::onInputChanged(const std::string &text)
 
 	std::size_t index = 0;
 	database->query(text, [this, &index] (const auto &e) {
-		auto &[file, path] = e;
+		auto &[file, path, size, perms] = e;
 		table->insertRow(table->rowCount());
 
 		auto fileItem = new QTableWidgetItem();
@@ -91,7 +91,15 @@ void MainWindow::onInputChanged(const std::string &text)
 		auto pathItem = new QTableWidgetItem();
 		pathItem->setText(QString::fromStdString(path));
 
+		auto sizeItem = new QTableWidgetItem();
+		sizeItem->setText(QString("%1").arg(size));
+
+		auto permsItem = new QTableWidgetItem();
+		permsItem->setText(QString("%1").arg(static_cast<int>(perms)));
+
 		table->setItem(table->rowCount() - 1, 0, fileItem);
 		table->setItem(table->rowCount() - 1, 1, pathItem);
+		table->setItem(table->rowCount() - 1, 2, sizeItem);
+		table->setItem(table->rowCount() - 1, 3, permsItem);
 	});
 }
