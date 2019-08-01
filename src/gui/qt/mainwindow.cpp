@@ -39,6 +39,7 @@ MainWindow::MainWindow(int argc, char **argv)
 	table->setColumnCount(4);
 	table->setHorizontalHeaderLabels({"File", "Folder", "Size", "Perms"});
 	table->setSelectionBehavior(QAbstractItemView::SelectRows);
+	table->verticalHeader()->setVisible(false);
 
 	setCentralWidget(centralWidget);
 
