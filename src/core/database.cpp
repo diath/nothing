@@ -73,7 +73,7 @@ Database::~Database()
 
 void Database::addEntry(const Entry &entry)
 {
-	std::unique_lock<std::mutex> lock{mutex};
+	std::lock_guard<std::mutex> lock{mutex};
 
 	sqlite3_stmt *stmt = nullptr;
 	if (sqlite3_prepare(handle, "INSERT INTO files (file, path, size, perms) VALUES (?, ?, ?, ?);", -1, &stmt, nullptr) != SQLITE_OK) {
@@ -111,7 +111,7 @@ void Database::addEntry(const Entry &entry)
 
 void Database::addEntries(const std::vector<Entry> &entries)
 {
-	std::unique_lock<std::mutex> lock{mutex};
+	std::lock_guard<std::mutex> lock{mutex};
 
 	sqlite3_exec(handle, "BEGIN TRANSACTION", nullptr, nullptr, nullptr);
 
