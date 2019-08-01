@@ -87,16 +87,22 @@ void MainWindow::onInputChanged(const std::string &text)
 		auto &[file, path, size, perms] = e;
 		table->insertRow(table->rowCount());
 
-		auto fileItem = new QTableWidgetItem();
+		auto createItem = [] () {
+			auto item = new QTableWidgetItem();
+			item->setFlags(item->flags() &  ~Qt::ItemIsEditable);
+			return item;
+		};
+
+		auto fileItem = createItem();
 		fileItem->setText(QString::fromStdString(file));
 
-		auto pathItem = new QTableWidgetItem();
+		auto pathItem = createItem();
 		pathItem->setText(QString::fromStdString(path));
 
-		auto sizeItem = new QTableWidgetItem();
+		auto sizeItem = createItem();
 		sizeItem->setText(QString("%1").arg(size));
 
-		auto permsItem = new QTableWidgetItem();
+		auto permsItem = createItem();
 		permsItem->setText(QString("%1").arg(static_cast<int>(perms)));
 
 		table->setItem(table->rowCount() - 1, 0, fileItem);
