@@ -17,6 +17,8 @@
 
 #include "mainwindow.hpp"
 
+#include "core/utils.hpp"
+
 MainWindow::MainWindow(int argc, char **argv)
 : QMainWindow{}
 , input{new QLineEdit}
@@ -39,6 +41,7 @@ MainWindow::MainWindow(int argc, char **argv)
 	table->setColumnCount(4);
 	table->setHorizontalHeaderLabels({"File", "Folder", "Size", "Perms"});
 	table->setSelectionBehavior(QAbstractItemView::SelectRows);
+	table->setShowGrid(false);
 	table->verticalHeader()->setVisible(false);
 
 	setCentralWidget(centralWidget);
@@ -82,8 +85,7 @@ void MainWindow::onInputChanged(const std::string &text)
 		return;
 	}
 
-	std::size_t index = 0;
-	database->query(text, [this, &index] (const auto &e) {
+	database->query(text, [this] (const auto &e) {
 		auto &[file, path, size, perms] = e;
 		table->insertRow(table->rowCount());
 
@@ -100,10 +102,12 @@ void MainWindow::onInputChanged(const std::string &text)
 		pathItem->setText(QString::fromStdString(path));
 
 		auto sizeItem = createItem();
-		sizeItem->setText(QString("%1").arg(size));
+		sizeItem->setText(QString("%1").arg(QString::fromStdString(HumanReadableSize(size))));
+		sizeItem->setTextAlignment(Qt::AlignVCenter | Qt::AlignRight);
 
 		auto permsItem = createItem();
-		permsItem->setText(QString("%1").arg(static_cast<int>(perms)));
+		permsItem->setText(QString("%1").arg(QString::fromStdString(HumanReadablePerms(perms))));
+		permsItem->setTextAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
 
 		table->setItem(table->rowCount() - 1, 0, fileItem);
 		table->setItem(table->rowCount() - 1, 1, pathItem);
