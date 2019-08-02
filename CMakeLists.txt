@@ -39,6 +39,7 @@ endif()
 set (src
 	src/core/database.cpp
 	src/core/scanner.cpp
+	src/core/utils.cpp
 	${src_gui}
 )
 
