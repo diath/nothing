@@ -16,6 +16,7 @@
 */
 
 #include <sstream>
+#include <tuple>
 #include <vector>
 
 #include "utils.hpp"
@@ -56,4 +57,78 @@ std::string HumanReadableSize(const std::uintmax_t size)
 	std::stringstream s{};
 	s << std::fixed << std::setprecision(2) << result << ' ' << Units[index];
 	return s.str();
+}
+
+FileType GetFileType(const std::string &name)
+{
+	static const std::tuple<std::string, FileType> FileTypes[] = {
+		// Document
+		{".txt", FileType::Document},
+		{".doc", FileType::Document},
+		{".pdf", FileType::Document},
+		{".tex", FileType::Document},
+		{".rtf", FileType::Document},
+		// Image
+		{".jpg", FileType::Image},
+		{".jpeg", FileType::Image},
+		{".png", FileType::Image},
+		{".bmp", FileType::Image},
+		{".gif", FileType::Image},
+		{".tiff", FileType::Image},
+		{".ppm", FileType::Image},
+		// Video
+		{".webm", FileType::Video},
+		{".mkv", FileType::Audio},
+		{".flv", FileType::Audio},
+		{".avi", FileType::Audio},
+		{".mp4", FileType::Audio},
+		{".flv", FileType::Audio},
+		// Audio
+		{".3gp", FileType::Audio},
+		{".aac", FileType::Audio},
+		{".m4a", FileType::Audio},
+		{".mp3", FileType::Audio},
+		{".ogg", FileType::Audio},
+		{".opus", FileType::Audio},
+		{".wav", FileType::Audio},
+		// Archive
+		{".zip", FileType::Archive},
+		{".rar", FileType::Archive},
+		{".tar", FileType::Archive},
+		{".gz", FileType::Archive},
+		{".xz", FileType::Archive},
+		{".bz2", FileType::Archive},
+		{".7z", FileType::Archive},
+		{".Z", FileType::Archive},
+		{".tgz", FileType::Archive},
+		{".tbz2", FileType::Archive},
+		// System
+		{".exe", FileType::System},
+		{".dll", FileType::System},
+		{".sys", FileType::System},
+		{".so", FileType::System},
+	};
+
+	auto size = name.size();
+	if (!size) {
+		return FileType::Generic;
+	}
+
+	for (const auto &pair: FileTypes) {
+		const auto &[ext, type] = pair;
+		if (ext.size() > size) {
+			continue;
+		}
+
+		auto index = name.rfind(ext);
+		if (index == std::string::npos) {
+			continue;
+		}
+
+		if (name.substr(index) == ext) {
+			return type;
+		}
+	}
+
+	return FileType::Generic;
 }

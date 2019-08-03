@@ -22,7 +22,19 @@
 #include <filesystem>
 #include <string>
 
+enum class FileType
+{
+	Generic,
+	Document,
+	Image,
+	Video,
+	Audio,
+	Archive,
+	System,
+};
+
 std::string HumanReadablePerms(const std::filesystem::perms perms);
 std::string HumanReadableSize(const std::uintmax_t size);
+FileType GetFileType(const std::string &name);
 
 #endif
