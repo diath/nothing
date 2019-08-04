@@ -15,6 +15,7 @@
 	THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include <algorithm>
 #include <sstream>
 #include <tuple>
 #include <vector>
@@ -114,18 +115,23 @@ FileType GetFileType(const std::string &name)
 		return FileType::Generic;
 	}
 
+	auto lowered = name;
+	std::transform(name.begin(), name.end(), lowered.begin(), [] (const unsigned char ch) {
+		return std::tolower(ch);
+	});
+
 	for (const auto &pair: FileTypes) {
 		const auto &[ext, type] = pair;
 		if (ext.size() > size) {
 			continue;
 		}
 
-		auto index = name.rfind(ext);
+		auto index = lowered.rfind(ext);
 		if (index == std::string::npos) {
 			continue;
 		}
 
-		if (name.substr(index) == ext) {
+		if (lowered.substr(index) == ext) {
 			return type;
 		}
 	}
