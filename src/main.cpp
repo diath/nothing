@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 		if (line == "stop") {
 			scanner.stop();
 		} else {
-			db.queryRegexp(line, [] (const auto &e) {
+			db.query(line, false, [] (const auto &e) {
 				const auto &[file, _, size, __] = e;
 				printf("Received %s (%d bytes)\n", file.c_str(), (int) size);
 			});

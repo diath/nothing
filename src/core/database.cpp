@@ -43,8 +43,9 @@ Database::Database()
 		printf("[Warning] The linked SQLite3 library was not built with the SQLITE_THREADSAFE option.\n");
 	}
 
+	sqlite3_config(SQLITE_CONFIG_SERIALIZED);
 	sqlite3_initialize();
-	if (sqlite3_open(":memory:", &handle) != SQLITE_OK) {
+	if (sqlite3_open_v2(":memory:", &handle, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr) != SQLITE_OK) {
 		fprintf(stderr, "[Error] Failed to open the SQLite3 database.\n");
 		// TODO: Terminate?
 	}
@@ -64,6 +65,8 @@ Database::Database()
 Database::~Database()
 {
 	if (handle != nullptr) {
+		stopSearchThread();
+
 		sqlite3_close(handle);
 		handle = nullptr;
 	}
@@ -156,73 +159,70 @@ void Database::addEntries(const std::vector<Entry> &entries)
 	sqlite3_exec(handle, "END TRANSACTION", nullptr, nullptr, nullptr);
 }
 
-void Database::query(const std::string &pattern, QueryCallback callback)
+void Database::query(const std::string &pattern, const bool regexp, QueryCallback callback)
 {
-	sqlite3_stmt *stmt = nullptr;
-	if (sqlite3_prepare(handle, "SELECT file, path, size, perms FROM files WHERE file LIKE ?;", -1, &stmt, nullptr) != SQLITE_OK) {
-		fprintf(stderr, "[Error] Failed to prepare query statement.\n");
-		return;
+	if (regexp) {
+		queryRegexp(pattern, callback);
+	} else {
+		queryLike(pattern, callback);
 	}
-
-	std::string param = "%" + pattern + "%";
-	if (sqlite3_bind_text(stmt, 1, param.c_str(), -1, nullptr) != SQLITE_OK) {
-		fprintf(stderr, "[Error] Failed to bind query parameter.\n");
-		sqlite3_finalize(stmt);
-		return;
-	}
-
-	int result = SQLITE_OK;
-	while ((result = sqlite3_step(stmt)) != SQLITE_DONE) {
-		if (result != SQLITE_ROW) {
-			fprintf(stderr, "[Error] Failed to fetch a query result.\n");
-			sqlite3_finalize(stmt);
-			return;
-		}
-
-		Entry entry{};
-		auto &[file, path, size, perms] = entry;
-		file = std::string(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0)));
-		path = std::string(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1)));
-		size = static_cast<std::uintmax_t>(sqlite3_column_int64(stmt, 2));
-		perms = static_cast<std::filesystem::perms>(sqlite3_column_int(stmt, 3));
-
-		callback(entry);
-	}
-
-	sqlite3_finalize(stmt);
 }
 
-void Database::queryRegexp(const std::string &pattern, QueryCallback callback)
+void Database::queryLike(const std::string &pattern, const QueryCallback &callback)
 {
-	sqlite3_stmt *stmt = nullptr;
-	if (sqlite3_prepare(handle, "SELECT file, path, size, perms FROM files WHERE file REGEXP(?);", -1, &stmt, nullptr) != SQLITE_OK) {
-		fprintf(stderr, "[Error] Failed to prepare query statement: %s.\n", sqlite3_errmsg(handle));
-		return;
-	}
+	queryInternal("SELECT file, path, size, perms FROM files WHERE file LIKE ?;", "%" + pattern + "%", callback);
+}
 
-	if (sqlite3_bind_text(stmt, 1, pattern.c_str(), -1, nullptr) != SQLITE_OK) {
-		fprintf(stderr, "[Error] Failed to bind query parameter: %s\n", sqlite3_errmsg(handle));
-		sqlite3_finalize(stmt);
-		return;
-	}
+void Database::queryRegexp(const std::string &pattern, const QueryCallback &callback)
+{
+	queryInternal("SELECT file, path, size, perms FROM files WHERE file REGEXP(?);", pattern, callback);
+}
 
-	int result = SQLITE_OK;
-	while ((result = sqlite3_step(stmt)) != SQLITE_DONE) {
-		if (result != SQLITE_ROW) {
-			fprintf(stderr, "[Error] Failed to fetch a query result: %s\n", sqlite3_errmsg(handle));
+void Database::queryInternal(const std::string &query, const std::string &pattern, const QueryCallback &callback)
+{
+	stopSearchThread();
+
+	searchStopped = false;
+	searchThread = std::thread([this, query, pattern, callback] () {
+		sqlite3_stmt *stmt = nullptr;
+		if (sqlite3_prepare(handle, query.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+			fprintf(stderr, "[Error] Failed to prepare query statement: %s.\n", sqlite3_errmsg(handle));
+			return;
+		}
+
+		if (sqlite3_bind_text(stmt, 1, pattern.c_str(), -1, nullptr) != SQLITE_OK) {
+			fprintf(stderr, "[Error] Failed to bind query parameter: %s\n", sqlite3_errmsg(handle));
 			sqlite3_finalize(stmt);
 			return;
 		}
 
-		Entry entry{};
-		auto &[file, path, size, perms] = entry;
-		file = std::string(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0)));
-		path = std::string(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1)));
-		size = static_cast<std::uintmax_t>(sqlite3_column_int64(stmt, 2));
-		perms = static_cast<std::filesystem::perms>(sqlite3_column_int(stmt, 3));
+		int result = SQLITE_OK;
+		while ((result = sqlite3_step(stmt)) != SQLITE_DONE && !searchStopped) {
+			if (result != SQLITE_ROW) {
+				fprintf(stderr, "[Error] Failed to fetch a query result: %s\n", sqlite3_errmsg(handle));
+				sqlite3_finalize(stmt);
+				return;
+			}
 
-		callback(entry);
+			Entry entry{};
+			auto &[file, path, size, perms] = entry;
+			file = std::string(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0)));
+			path = std::string(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1)));
+			size = static_cast<std::uintmax_t>(sqlite3_column_int64(stmt, 2));
+			perms = static_cast<std::filesystem::perms>(sqlite3_column_int(stmt, 3));
+
+			callback(entry);
+		}
+
+		sqlite3_finalize(stmt);
+	});
+}
+
+void Database::stopSearchThread()
+{
+	searchStopped = true;
+
+	if (searchThread.joinable()) {
+		searchThread.join();
 	}
-
-	sqlite3_finalize(stmt);
 }

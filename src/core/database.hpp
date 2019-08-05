@@ -18,11 +18,13 @@
 #ifndef NOTHING_DATABASE_HPP
 #define NOTHING_DATABASE_HPP
 
+#include <atomic>
 #include <cstdint>
 #include <filesystem>
 #include <functional>
 #include <mutex>
 #include <string>
+#include <thread>
 #include <tuple>
 #include <vector>
 
@@ -46,12 +48,19 @@ class Database
 		void addEntry(const Entry &entry);
 		void addEntries(const std::vector<Entry> &entries);
 
-		void query(const std::string &pattern, QueryCallback callback);
-		void queryRegexp(const std::string &pattern, QueryCallback callback);
+		void query(const std::string &pattern, const bool regexp, QueryCallback callback);
+		void queryLike(const std::string &pattern, const QueryCallback &callback);
+		void queryRegexp(const std::string &pattern, const QueryCallback &callback);
+
+		void stopSearchThread();
 
 	private:
 		sqlite3 *handle = nullptr;
 		std::mutex mutex{};
+		std::thread searchThread{};
+		std::atomic<bool> searchStopped = false;
+
+		void queryInternal(const std::string &query, const std::string &pattern, const QueryCallback &callback);
 };
 
 #endif
