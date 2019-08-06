@@ -35,6 +35,6 @@ enum class FileType
 
 std::string HumanReadablePerms(const std::filesystem::perms perms);
 std::string HumanReadableSize(const std::uintmax_t size);
-FileType GetFileType(const std::string &name);
+FileType GetFileType(std::string name);
 
 #endif

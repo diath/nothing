@@ -60,7 +60,7 @@ std::string HumanReadableSize(const std::uintmax_t size)
 	return s.str();
 }
 
-FileType GetFileType(const std::string &name)
+FileType GetFileType(std::string name)
 {
 	static const std::tuple<std::string, FileType> FileTypes[] = {
 		// Document
@@ -115,8 +115,7 @@ FileType GetFileType(const std::string &name)
 		return FileType::Generic;
 	}
 
-	auto lowered = name;
-	std::transform(name.begin(), name.end(), lowered.begin(), [] (const unsigned char ch) {
+	std::transform(name.begin(), name.end(), name.begin(), [] (const unsigned char ch) {
 		return std::tolower(ch);
 	});
 
@@ -126,12 +125,12 @@ FileType GetFileType(const std::string &name)
 			continue;
 		}
 
-		auto index = lowered.rfind(ext);
+		auto index = name.rfind(ext);
 		if (index == std::string::npos) {
 			continue;
 		}
 
-		if (lowered.substr(index) == ext) {
+		if (name.substr(index) == ext) {
 			return type;
 		}
 	}
