@@ -61,6 +61,13 @@ MainWindow::MainWindow(int argc, char **argv)
 		scanner->run();
 		statusBar()->showMessage("Scanning the paths...");
 	}
+
+	qRegisterMetaType<Database::Entry>("Database::Entry");
+	qRegisterMetaType<std::size_t>("std::size_t");
+
+	connect(this, &MainWindow::onEntry, this, [this] (const std::size_t index, const Database::Entry &entry) {
+		addEntry(index, entry);
+	}, Qt::QueuedConnection);
 }
 
 void MainWindow::createActions()
@@ -80,38 +87,49 @@ void MainWindow::createStatus()
 void MainWindow::onInputChanged(const std::string &text)
 {
 	table->setRowCount(0);
+	database->stopSearchThread();
 
 	if (text.empty()) {
 		return;
 	}
 
-	database->query(text, [this] (const auto &e) {
-		auto &[file, path, size, perms] = e;
-		table->insertRow(table->rowCount());
-
-		auto createItem = [] () {
-			auto item = new QTableWidgetItem();
-			item->setFlags(item->flags() &  ~Qt::ItemIsEditable);
-			return item;
-		};
-
-		auto fileItem = createItem();
-		fileItem->setText(QString::fromStdString(file));
-
-		auto pathItem = createItem();
-		pathItem->setText(QString::fromStdString(path));
-
-		auto sizeItem = createItem();
-		sizeItem->setText(QString("%1").arg(QString::fromStdString(HumanReadableSize(size))));
-		sizeItem->setTextAlignment(Qt::AlignVCenter | Qt::AlignRight);
-
-		auto permsItem = createItem();
-		permsItem->setText(QString("%1").arg(QString::fromStdString(HumanReadablePerms(perms))));
-		permsItem->setTextAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
-
-		table->setItem(table->rowCount() - 1, 0, fileItem);
-		table->setItem(table->rowCount() - 1, 1, pathItem);
-		table->setItem(table->rowCount() - 1, 2, sizeItem);
-		table->setItem(table->rowCount() - 1, 3, permsItem);
+	++queryIndex;
+	database->query(text, false, [this] (const std::size_t index, const auto &entry) {
+		emit onEntry(index, entry);
 	});
+}
+
+void MainWindow::addEntry(const std::size_t index, const Database::Entry &entry)
+{
+	if (index != queryIndex) {
+		return;
+	}
+
+	const auto &[file, path, size, perms] = entry;
+	table->insertRow(table->rowCount());
+
+	auto createItem = [] () {
+		auto item = new QTableWidgetItem();
+		item->setFlags(item->flags() &  ~Qt::ItemIsEditable);
+		return item;
+	};
+
+	auto fileItem = createItem();
+	fileItem->setText(QString::fromStdString(file));
+
+	auto pathItem = createItem();
+	pathItem->setText(QString::fromStdString(path));
+
+	auto sizeItem = createItem();
+	sizeItem->setText(QString("%1").arg(QString::fromStdString(HumanReadableSize(size))));
+	sizeItem->setTextAlignment(Qt::AlignVCenter | Qt::AlignRight);
+
+	auto permsItem = createItem();
+	permsItem->setText(QString("%1").arg(QString::fromStdString(HumanReadablePerms(perms))));
+	permsItem->setTextAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
+
+	table->setItem(table->rowCount() - 1, 0, fileItem);
+	table->setItem(table->rowCount() - 1, 1, pathItem);
+	table->setItem(table->rowCount() - 1, 2, sizeItem);
+	table->setItem(table->rowCount() - 1, 3, permsItem);
 }

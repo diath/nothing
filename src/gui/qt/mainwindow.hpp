@@ -41,6 +41,14 @@ class MainWindow: public QMainWindow
 
 		std::unique_ptr<Database> database = nullptr;
 		std::unique_ptr<Scanner> scanner = nullptr;
+
+		std::size_t queryIndex = 0;
+
+	private slots:
+		void addEntry(const std::size_t index, const Database::Entry &entry);
+
+	signals:
+		void onEntry(const std::size_t index, const Database::Entry &entry);
 };
 
 #endif
