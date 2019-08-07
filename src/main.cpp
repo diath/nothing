@@ -48,9 +48,9 @@ int main(int argc, char **argv)
 		if (line == "stop") {
 			scanner.stop();
 		} else {
-			db.query(line, false, [] (const auto &e) {
+			db.query(line, false, [] (const std::size_t index, const auto &e) {
 				const auto &[file, _, size, __] = e;
-				printf("Received %s (%d bytes)\n", file.c_str(), (int) size);
+				printf("(%ld) Received %s (%d bytes)\n", index, file.c_str(), (int) size);
 			});
 		}
 	}

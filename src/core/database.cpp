@@ -180,6 +180,9 @@ void Database::queryRegexp(const std::string &pattern, const QueryCallback &call
 
 void Database::queryInternal(const std::string &query, const std::string &pattern, const QueryCallback &callback)
 {
+	static std::atomic<std::size_t> QueryIndex = 0;
+	++QueryIndex;
+
 	stopSearchThread();
 
 	searchStopped = false;
@@ -211,7 +214,7 @@ void Database::queryInternal(const std::string &query, const std::string &patter
 			size = static_cast<std::uintmax_t>(sqlite3_column_int64(stmt, 2));
 			perms = static_cast<std::filesystem::perms>(sqlite3_column_int(stmt, 3));
 
-			callback(entry);
+			callback(QueryIndex, entry);
 		}
 
 		sqlite3_finalize(stmt);
