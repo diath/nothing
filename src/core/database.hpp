@@ -35,6 +35,7 @@ class Database
 	public:
 		using Entry = std::tuple<std::string, std::string, std::uintmax_t, std::filesystem::perms>;
 		using QueryCallback = std::function<void(const std::size_t, const Entry &)>;
+		using QueryDoneCallback = std::function<void()>;
 
 		Database();
 		~Database();
@@ -48,9 +49,9 @@ class Database
 		void addEntry(const Entry &entry);
 		void addEntries(const std::vector<Entry> &entries);
 
-		void query(const std::string &pattern, const bool regexp, QueryCallback callback);
-		void queryLike(const std::string &pattern, const QueryCallback &callback);
-		void queryRegexp(const std::string &pattern, const QueryCallback &callback);
+		void query(const std::string &pattern, const bool regexp, QueryCallback callback, QueryDoneCallback doneCallback = {});
+		void queryLike(const std::string &pattern, const QueryCallback &callback, const QueryDoneCallback &doneCallback);
+		void queryRegexp(const std::string &pattern, const QueryCallback &callback, const QueryDoneCallback &doneCallback);
 
 		void stopSearchThread();
 
@@ -60,7 +61,7 @@ class Database
 		std::thread searchThread{};
 		std::atomic<bool> searchStopped = false;
 
-		void queryInternal(const std::string &query, const std::string &pattern, const QueryCallback &callback);
+		void queryInternal(const std::string &query, const std::string &pattern, const QueryCallback &callback, const QueryDoneCallback &doneCallback);
 };
 
 #endif

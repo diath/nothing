@@ -159,26 +159,26 @@ void Database::addEntries(const std::vector<Entry> &entries)
 	sqlite3_exec(handle, "END TRANSACTION", nullptr, nullptr, nullptr);
 }
 
-void Database::query(const std::string &pattern, const bool regexp, QueryCallback callback)
+void Database::query(const std::string &pattern, const bool regexp, QueryCallback callback, QueryDoneCallback doneCallback/* = {} */)
 {
 	if (regexp) {
-		queryRegexp(pattern, callback);
+		queryRegexp(pattern, callback, doneCallback);
 	} else {
-		queryLike(pattern, callback);
+		queryLike(pattern, callback, doneCallback);
 	}
 }
 
-void Database::queryLike(const std::string &pattern, const QueryCallback &callback)
+void Database::queryLike(const std::string &pattern, const QueryCallback &callback, const QueryDoneCallback &doneCallback)
 {
-	queryInternal("SELECT file, path, size, perms FROM files WHERE file LIKE ?;", "%" + pattern + "%", callback);
+	queryInternal("SELECT file, path, size, perms FROM files WHERE file LIKE ?;", "%" + pattern + "%", callback, doneCallback);
 }
 
-void Database::queryRegexp(const std::string &pattern, const QueryCallback &callback)
+void Database::queryRegexp(const std::string &pattern, const QueryCallback &callback, const QueryDoneCallback &doneCallback)
 {
-	queryInternal("SELECT file, path, size, perms FROM files WHERE file REGEXP(?);", pattern, callback);
+	queryInternal("SELECT file, path, size, perms FROM files WHERE file REGEXP(?);", pattern, callback, doneCallback);
 }
 
-void Database::queryInternal(const std::string &query, const std::string &pattern, const QueryCallback &callback)
+void Database::queryInternal(const std::string &query, const std::string &pattern, const QueryCallback &callback, const QueryDoneCallback &doneCallback)
 {
 	static std::atomic<std::size_t> QueryIndex = 0;
 	++QueryIndex;
@@ -186,7 +186,7 @@ void Database::queryInternal(const std::string &query, const std::string &patter
 	stopSearchThread();
 
 	searchStopped = false;
-	searchThread = std::thread([this, query, pattern, callback] () {
+	searchThread = std::thread([this, query, pattern, callback, doneCallback] () {
 		sqlite3_stmt *stmt = nullptr;
 		if (sqlite3_prepare(handle, query.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
 			fprintf(stderr, "[Error] Failed to prepare query statement: %s.\n", sqlite3_errmsg(handle));
@@ -218,6 +218,7 @@ void Database::queryInternal(const std::string &query, const std::string &patter
 		}
 
 		sqlite3_finalize(stmt);
+		doneCallback();
 	});
 }
 
