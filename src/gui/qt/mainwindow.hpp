@@ -46,9 +46,11 @@ class MainWindow: public QMainWindow
 
 	private slots:
 		void addEntry(const std::size_t index, const Database::Entry &entry);
+		void fitContents();
 
 	signals:
 		void onEntry(const std::size_t index, const Database::Entry &entry);
+		void onDone();
 };
 
 #endif

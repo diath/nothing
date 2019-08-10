@@ -43,6 +43,7 @@ MainWindow::MainWindow(int argc, char **argv)
 	table->setSelectionBehavior(QAbstractItemView::SelectRows);
 	table->setShowGrid(false);
 	table->verticalHeader()->setVisible(false);
+	table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
 
 	setCentralWidget(centralWidget);
 
@@ -67,6 +68,10 @@ MainWindow::MainWindow(int argc, char **argv)
 
 	connect(this, &MainWindow::onEntry, this, [this] (const std::size_t index, const Database::Entry &entry) {
 		addEntry(index, entry);
+	}, Qt::QueuedConnection);
+
+	connect(this, &MainWindow::onDone, this, [this] () {
+		fitContents();
 	}, Qt::QueuedConnection);
 }
 
@@ -96,6 +101,8 @@ void MainWindow::onInputChanged(const std::string &text)
 	++queryIndex;
 	database->query(text, false, [this] (const std::size_t index, const auto &entry) {
 		emit onEntry(index, entry);
+	}, [this] () {
+		emit onDone();
 	});
 }
 
@@ -132,4 +139,11 @@ void MainWindow::addEntry(const std::size_t index, const Database::Entry &entry)
 	table->setItem(table->rowCount() - 1, 1, pathItem);
 	table->setItem(table->rowCount() - 1, 2, sizeItem);
 	table->setItem(table->rowCount() - 1, 3, permsItem);
+}
+
+void MainWindow::fitContents()
+{
+	table->resizeColumnToContents(0); // name
+	table->resizeColumnToContents(2); // size
+	table->resizeColumnToContents(3); // perms
 }
