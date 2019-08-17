@@ -79,11 +79,11 @@ FileType GetFileType(std::string name)
 		{".ppm", FileType::Image},
 		// Video
 		{".webm", FileType::Video},
-		{".mkv", FileType::Audio},
-		{".flv", FileType::Audio},
-		{".avi", FileType::Audio},
-		{".mp4", FileType::Audio},
-		{".flv", FileType::Audio},
+		{".mkv", FileType::Video},
+		{".flv", FileType::Video},
+		{".avi", FileType::Video},
+		{".mp4", FileType::Video},
+		{".flv", FileType::Video},
 		// Audio
 		{".3gp", FileType::Audio},
 		{".aac", FileType::Audio},
