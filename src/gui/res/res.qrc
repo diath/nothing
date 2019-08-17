@@ -1,0 +1,11 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+	<qresource prefix="src/gui/res/">
+		<file>archive.svg</file>
+		<file>audio.svg</file>
+		<file>document.svg</file>
+		<file>image.svg</file>
+		<file>system.svg</file>
+		<file>video.svg</file>
+	</qresource>
+</RCC>

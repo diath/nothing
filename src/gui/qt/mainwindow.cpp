@@ -19,6 +19,26 @@
 
 #include "core/utils.hpp"
 
+namespace {
+
+std::string FileTypeToResource(const FileType type)
+{
+	switch (type) {
+		case FileType::Archive:  return ":src/gui/res/archive.svg";  break;
+		case FileType::Audio:    return ":src/gui/res/audio.svg";    break;
+		case FileType::Document: return ":src/gui/res/document.svg"; break;
+		case FileType::Image:    return ":src/gui/res/image.svg";    break;
+		case FileType::System:   return ":src/gui/res/system.svg";   break;
+		case FileType::Video:    return ":src/gui/res/video.svg";    break;
+		case FileType::Generic:  return {};                           break;
+	}
+
+	return {};
+}
+
+
+} // namespace
+
 MainWindow::MainWindow(int argc, char **argv)
 : QMainWindow{}
 , input{new QLineEdit}
@@ -139,6 +159,11 @@ void MainWindow::addEntry(const std::size_t index, const Database::Entry &entry)
 	table->setItem(table->rowCount() - 1, 1, pathItem);
 	table->setItem(table->rowCount() - 1, 2, sizeItem);
 	table->setItem(table->rowCount() - 1, 3, permsItem);
+
+	auto res = FileTypeToResource(GetFileType(file));
+	if (!res.empty()) {
+		fileItem->setIcon(QIcon(QString::fromStdString(res)));
+	}
 }
 
 void MainWindow::fitContents()

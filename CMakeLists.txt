@@ -19,12 +19,14 @@ find_package(SQLite3)
 if(WITH_GUI_QT)
 	set(CMAKE_AUTOMOC ON)
 	set(CMAKE_AUTOUIC ON)
+	set(CMAKE_AUTORCC ON)
 
 	find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 	set(src_gui
 		src/gui/qt/main.cpp
 		src/gui/qt/mainwindow.cpp
+		src/gui/res/res.qrc
 	)
 
 	set(lib_gui
