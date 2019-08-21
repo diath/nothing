@@ -15,49 +15,37 @@
 	THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef NOTHING_MAINWINDOW_HPP
-#define NOTHING_MAINWINDOW_HPP
+#ifndef NOTHING_PATHSDIALOG_HPP
+#define NOTHING_PATHSDIALOG_HPP
 
 #include <QtWidgets>
 
-#include "core/database.hpp"
-#include "core/scanner.hpp"
-
-#include "pathsdialog.hpp"
-
-class MainWindow: public QMainWindow
+class PathsDialog: public QDialog
 {
 	Q_OBJECT
 
 	public:
-		MainWindow(int argc, char **argv);
+		PathsDialog(QWidget *parent);
+
+		void addPath(const std::string &dir);
 
 	private:
-		PathsDialog *pathsDialog = nullptr;
+		QListWidget *list = nullptr;
+		QLineEdit *path = nullptr;
+		QPushButton *browse = nullptr;
+		QPushButton *add = nullptr;
+		QPushButton *remove = nullptr;
+		QPushButton *close = nullptr;
 
-		void createActions();
-		void createStatus();
-
-		void onInputChanged(const std::string &text);
-
-		void onPathAdded(const std::string &dir);
-		void onPathRemoved(const std::string &dir);
-
-		QLineEdit *input = nullptr;
-		QTableWidget *table = nullptr;
-
-		std::unique_ptr<Database> database = nullptr;
-		std::unique_ptr<Scanner> scanner = nullptr;
-
-		std::size_t queryIndex = 0;
-
-	private slots:
-		void addEntry(const std::size_t index, const Database::Entry &entry);
-		void fitContents();
+		void onBrowsePressed();
+		void onAddPressed();
+		void onRemovePressed();
+		void onClosePressed();
 
 	signals:
-		void onEntry(const std::size_t index, const Database::Entry &entry);
-		void onDone();
+		void onPathAdded(const std::string &path);
+		void onPathRemoved(const std::string &path);
 };
 
-#endif // NOTHING_MAINWINDOW_HPP
+
+#endif // NOTHING_PATHSDIALOG_HPP

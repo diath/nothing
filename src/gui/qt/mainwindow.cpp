@@ -41,6 +41,7 @@ std::string FileTypeToResource(const FileType type)
 
 MainWindow::MainWindow(int argc, char **argv)
 : QMainWindow{}
+, pathsDialog{new PathsDialog(this)}
 , input{new QLineEdit}
 , table{new QTableWidget}
 {
@@ -78,10 +79,10 @@ MainWindow::MainWindow(int argc, char **argv)
 		for (int i = 0; i < argc; ++i) {
 			scanner->addPath(argv[i]);
 		}
-
-		scanner->run();
-		statusBar()->showMessage("Scanning the paths...");
 	}
+
+	scanner->run();
+	statusBar()->showMessage("Scanning the paths...");
 
 	qRegisterMetaType<Database::Entry>("Database::Entry");
 	qRegisterMetaType<std::size_t>("std::size_t");
@@ -93,11 +94,25 @@ MainWindow::MainWindow(int argc, char **argv)
 	connect(this, &MainWindow::onDone, this, [this] () {
 		fitContents();
 	}, Qt::QueuedConnection);
+
+	connect(pathsDialog, &PathsDialog::onPathAdded, [this] (const std::string &dir) {
+		onPathAdded(dir);
+	});
+	connect(pathsDialog, &PathsDialog::onPathRemoved, [this] (const std::string &dir) {
+		onPathRemoved(dir);
+	});
 }
 
 void MainWindow::createActions()
 {
 	QMenu *program = menuBar()->addMenu("Program");
+	program->addAction("Path Manager", [this] () {
+		pathsDialog->show();
+	});
+	program->addAction("Quit", [this] () {
+		QApplication::quit();
+	});
+
 	QMenu *view = menuBar()->addMenu("View");
 	QMenu *help = menuBar()->addMenu("Help");
 
@@ -171,4 +186,28 @@ void MainWindow::fitContents()
 	table->resizeColumnToContents(0); // name
 	table->resizeColumnToContents(2); // size
 	table->resizeColumnToContents(3); // perms
+}
+
+void MainWindow::onPathAdded(const std::string &dir)
+{
+	auto result = scanner->addPath(dir);
+	if (result == Scanner::AddPathResult::Ok) {
+		pathsDialog->addPath(dir);
+	} else {
+		QString message = "Unknown Error";
+		if (result == Scanner::AddPathResult::PathDoesNotExist) {
+			message = "The selected path does not exist.";
+		} else if (result == Scanner::AddPathResult::PathNotDirectory) {
+			message = "The selected path is not a directory.";
+		} else if (result == Scanner::AddPathResult::PathAlreadyAdded) {
+			message = "The selected path has already been added.";
+		}
+
+		QMessageBox::warning(this, "Path Error", message);
+	}
+}
+
+void MainWindow::onPathRemoved(const std::string &dir)
+{
+	//
 }

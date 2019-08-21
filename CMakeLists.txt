@@ -26,6 +26,7 @@ if(WITH_GUI_QT)
 	set(src_gui
 		src/gui/qt/main.cpp
 		src/gui/qt/mainwindow.cpp
+		src/gui/qt/pathsdialog.cpp
 		src/gui/res/res.qrc
 	)
 
