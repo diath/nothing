@@ -104,7 +104,7 @@ void Scanner::workerTask(const std::string &path)
 	entries.reserve(BatchSize);
 
 	std::size_t counter = 0;
-	for (auto &&entry: fs::recursive_directory_iterator{path}) {
+	for (auto &&entry: fs::recursive_directory_iterator{path, fs::directory_options::skip_permission_denied}) {
 		if (!running) {
 			break;
 		}
