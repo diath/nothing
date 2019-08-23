@@ -29,12 +29,20 @@ PathsDialog::PathsDialog(QWidget *parent)
 	auto layout = new QVBoxLayout();
 	setLayout(layout);
 
+	auto pathHolder = new QWidget();
+	auto pathLayout = new QHBoxLayout();
+	pathLayout->setMargin(0);
+	pathHolder->setLayout(pathLayout);
+	pathLayout->addWidget(path);
+	pathLayout->addWidget(browse);
+
 	layout->addWidget(list);
-	layout->addWidget(path);
-	layout->addWidget(browse);
+	layout->addWidget(pathHolder);
 	layout->addWidget(add);
 	layout->addWidget(remove);
 	layout->addWidget(close);
+
+	path->setReadOnly(true);
 
 	connect(browse, &QPushButton::pressed, [this] () {
 		onBrowsePressed();
