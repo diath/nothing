@@ -114,9 +114,26 @@ void MainWindow::createActions()
 	});
 
 	QMenu *view = menuBar()->addMenu("View");
-	QMenu *help = menuBar()->addMenu("Help");
+	(void) view;
 
-	(void) program; (void) view; (void) help;
+	QMenu *help = menuBar()->addMenu("Help");
+	help->addAction("Repository", [this] () {
+		QDesktopServices::openUrl({"https://github.com/diath/nothing"});
+	});
+	help->addAction("License", [this] () {
+		auto file = QFile(":/src/gui/res/license.txt");
+		if (!file.open(QIODevice::ReadOnly)) {
+			return;
+		}
+
+		QMessageBox::information(this, "License", QTextStream(&file).readAll());
+	});
+	help->addAction("About", [this] () {
+		QMessageBox::information(this, "About",
+			"nothing - Locate files by name instantly.\n"
+			"Version 0.1\n"
+			"Copyright (c) 2019 Kamil Chojnowski Y29udGFjdEBkaWF0aC5uZXQ=");
+	});
 }
 
 void MainWindow::createStatus()

@@ -7,5 +7,6 @@
 		<file>image.svg</file>
 		<file>system.svg</file>
 		<file>video.svg</file>
+		<file>license.txt</file>
 	</qresource>
 </RCC>
