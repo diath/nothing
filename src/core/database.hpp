@@ -33,7 +33,7 @@
 class Database
 {
 	public:
-		using Entry = std::tuple<std::string, std::string, std::uintmax_t, std::filesystem::perms>;
+		using Entry = std::tuple<std::string, std::string, std::string, std::uintmax_t, std::filesystem::perms>;
 		using QueryCallback = std::function<void(const std::size_t, const Entry &)>;
 		using QueryDoneCallback = std::function<void()>;
 

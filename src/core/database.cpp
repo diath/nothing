@@ -51,7 +51,7 @@ Database::Database()
 	}
 
 	char *error = nullptr;
-	if (sqlite3_exec(handle, "CREATE TABLE files (file TEXT, path TEXT, size INT, perms INT);", nullptr, nullptr, &error) != SQLITE_OK) {
+	if (sqlite3_exec(handle, "CREATE TABLE files (file TEXT, path TEXT, parent TEXT, size INT, perms INT);", nullptr, nullptr, &error) != SQLITE_OK) {
 		fprintf(stderr, "[Error] Failed to create the files table: %s\n", error);
 		// TODO: Terminate?
 	}
@@ -79,12 +79,12 @@ void Database::addEntry(const Entry &entry)
 	std::lock_guard<std::mutex> lock{mutex};
 
 	sqlite3_stmt *stmt = nullptr;
-	if (sqlite3_prepare(handle, "INSERT INTO files (file, path, size, perms) VALUES (?, ?, ?, ?);", -1, &stmt, nullptr) != SQLITE_OK) {
+	if (sqlite3_prepare(handle, "INSERT INTO files (file, path, parent, size, perms) VALUES (?, ?, ?, ?, ?);", -1, &stmt, nullptr) != SQLITE_OK) {
 		// TODO: Handle gracefully?
 		return;
 	}
 
-	const auto &[name, path, size, perms] = entry;
+	const auto &[name, path, parent, size, perms] = entry;
 
 	if (sqlite3_bind_text(stmt, 1, name.c_str(), -1, nullptr) != SQLITE_OK) {
 		// TODO: Handle gracefully?
@@ -96,13 +96,18 @@ void Database::addEntry(const Entry &entry)
 		return;
 	}
 
-	if (sqlite3_bind_int64(stmt, 3, static_cast<sqlite3_int64>(size)) != SQLITE_OK) {
+	if (sqlite3_bind_text(stmt, 3, parent.c_str(), -1, nullptr) != SQLITE_OK) {
+		// TODO: Handle gracefully?
+		return;
+	}
+
+	if (sqlite3_bind_int64(stmt, 4, static_cast<sqlite3_int64>(size)) != SQLITE_OK) {
 		// TODO: Handle gracefully?
 		sqlite3_finalize(stmt);
 		return;
 	}
 
-	if (sqlite3_bind_int(stmt, 4, static_cast<int>(perms)) != SQLITE_OK) {
+	if (sqlite3_bind_int(stmt, 5, static_cast<int>(perms)) != SQLITE_OK) {
 		// TODO: Handle gracefully?
 		sqlite3_finalize(stmt);
 		return;
@@ -119,13 +124,13 @@ void Database::addEntries(const std::vector<Entry> &entries)
 	sqlite3_exec(handle, "BEGIN TRANSACTION", nullptr, nullptr, nullptr);
 
 	sqlite3_stmt *stmt = nullptr;
-	if (sqlite3_prepare(handle, "INSERT INTO files (file, path, size, perms) VALUES (?, ?, ?, ?);", -1, &stmt, nullptr) != SQLITE_OK) {
+	if (sqlite3_prepare(handle, "INSERT INTO files (file, path, parent, size, perms) VALUES (?, ?, ?, ?, ?);", -1, &stmt, nullptr) != SQLITE_OK) {
 		// TODO: Handle gracefully?
 		return;
 	}
 
 	for (auto &&entry: entries) {
-		const auto &[name, path, size, perms] = entry;
+		const auto &[name, path, parent, size, perms] = entry;
 
 		if (sqlite3_bind_text(stmt, 1, name.c_str(), -1, nullptr) != SQLITE_OK) {
 			// TODO: Handle gracefully?
@@ -139,13 +144,19 @@ void Database::addEntries(const std::vector<Entry> &entries)
 			return;
 		}
 
-		if (sqlite3_bind_int64(stmt, 3, static_cast<sqlite3_int64>(size)) != SQLITE_OK) {
+		if (sqlite3_bind_text(stmt, 3, parent.c_str(), -1, nullptr) != SQLITE_OK) {
 			// TODO: Handle gracefully?
 			sqlite3_finalize(stmt);
 			return;
 		}
 
-		if (sqlite3_bind_int(stmt, 4, static_cast<int>(perms)) != SQLITE_OK) {
+		if (sqlite3_bind_int64(stmt, 4, static_cast<sqlite3_int64>(size)) != SQLITE_OK) {
+			// TODO: Handle gracefully?
+			sqlite3_finalize(stmt);
+			return;
+		}
+
+		if (sqlite3_bind_int(stmt, 5, static_cast<int>(perms)) != SQLITE_OK) {
 			// TODO: Handle gracefully?
 			sqlite3_finalize(stmt);
 			return;
@@ -170,12 +181,12 @@ void Database::query(const std::string &pattern, const bool regexp, QueryCallbac
 
 void Database::queryLike(const std::string &pattern, const QueryCallback &callback, const QueryDoneCallback &doneCallback)
 {
-	queryInternal("SELECT file, path, size, perms FROM files WHERE file LIKE ?;", "%" + pattern + "%", callback, doneCallback);
+	queryInternal("SELECT file, path, parent, size, perms FROM files WHERE file LIKE ?;", "%" + pattern + "%", callback, doneCallback);
 }
 
 void Database::queryRegexp(const std::string &pattern, const QueryCallback &callback, const QueryDoneCallback &doneCallback)
 {
-	queryInternal("SELECT file, path, size, perms FROM files WHERE file REGEXP(?);", pattern, callback, doneCallback);
+	queryInternal("SELECT file, path, parent, size, perms FROM files WHERE file REGEXP(?);", pattern, callback, doneCallback);
 }
 
 void Database::queryInternal(const std::string &query, const std::string &pattern, const QueryCallback &callback, const QueryDoneCallback &doneCallback)
@@ -208,11 +219,12 @@ void Database::queryInternal(const std::string &query, const std::string &patter
 			}
 
 			Entry entry{};
-			auto &[file, path, size, perms] = entry;
+			auto &[file, path, parent, size, perms] = entry;
 			file = std::string(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0)));
 			path = std::string(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1)));
-			size = static_cast<std::uintmax_t>(sqlite3_column_int64(stmt, 2));
-			perms = static_cast<std::filesystem::perms>(sqlite3_column_int(stmt, 3));
+			parent = std::string(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 2)));
+			size = static_cast<std::uintmax_t>(sqlite3_column_int64(stmt, 3));
+			perms = static_cast<std::filesystem::perms>(sqlite3_column_int(stmt, 4));
 
 			callback(QueryIndex, entry);
 		}

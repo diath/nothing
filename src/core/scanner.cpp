@@ -115,12 +115,13 @@ void Scanner::workerTask(const std::string &path)
 
 		std::error_code ec{};
 
-		auto &path = entry.path();
+		auto &filePath = entry.path();
 		auto status = entry.status();
 
 		entries.emplace_back(
-			path.filename().string(),
-			path.parent_path().string(),
+			filePath.filename().string(),
+			filePath.parent_path().string(),
+			path,
 			entry.file_size(ec),
 			status.permissions()
 		);

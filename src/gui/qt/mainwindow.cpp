@@ -164,7 +164,7 @@ void MainWindow::addEntry(const std::size_t index, const Database::Entry &entry)
 		return;
 	}
 
-	const auto &[file, path, size, perms] = entry;
+	const auto &[file, path, _, size, perms] = entry;
 	table->insertRow(table->rowCount());
 
 	auto createItem = [] () {
