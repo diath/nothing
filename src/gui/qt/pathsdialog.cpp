@@ -60,6 +60,12 @@ PathsDialog::PathsDialog(QWidget *parent)
 	setWindowTitle("Path Manager");
 }
 
+void PathsDialog::reject()
+{
+	path->setText("");
+	QDialog::reject();
+}
+
 void PathsDialog::onBrowsePressed()
 {
 	auto dir = QFileDialog::getExistingDirectory(this, "Select Directory");
@@ -80,6 +86,7 @@ void PathsDialog::onAddPressed()
 	// NOTE: We do not add the path to the ListWidget here, instead we wait for the MainWindow to add the path,
 	// after it's done verifying that it's been successfully added.
 	emit onPathAdded(dir.toStdString());
+	path->setText("");
 }
 
 void PathsDialog::onRemovePressed()
@@ -104,6 +111,7 @@ void PathsDialog::onRemovePressed()
 
 void PathsDialog::onClosePressed()
 {
+	path->setText("");
 	hide();
 }
 

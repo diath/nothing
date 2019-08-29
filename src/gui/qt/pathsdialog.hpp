@@ -37,6 +37,8 @@ class PathsDialog: public QDialog
 		QPushButton *remove = nullptr;
 		QPushButton *close = nullptr;
 
+		void reject() final;
+
 		void onBrowsePressed();
 		void onAddPressed();
 		void onRemovePressed();
