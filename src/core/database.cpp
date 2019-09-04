@@ -170,6 +170,29 @@ void Database::addEntries(const std::vector<Entry> &entries)
 	sqlite3_exec(handle, "END TRANSACTION", nullptr, nullptr, nullptr);
 }
 
+void Database::removeEntries(const std::string &parent)
+{
+	std::lock_guard<std::mutex> lock{mutex};
+
+	sqlite3_exec(handle, "BEGIN TRANSACTION", nullptr, nullptr, nullptr);
+
+	sqlite3_stmt *stmt = nullptr;
+	if (sqlite3_prepare(handle, "DELETE FROM files WHERE parent = ?", -1, &stmt, nullptr) != SQLITE_OK) {
+		// TODO: Handle gracefully?
+		return;
+	}
+
+	if (sqlite3_bind_text(stmt, 1, parent.c_str(), -1, nullptr) != SQLITE_OK) {
+		// TODO: Handle gracefully?
+		sqlite3_finalize(stmt);
+		return;
+	}
+
+	sqlite3_step(stmt);
+	sqlite3_finalize(stmt);
+	sqlite3_exec(handle, "END TRANSACTION", nullptr, nullptr, nullptr);
+}
+
 void Database::query(const std::string &pattern, const bool regexp, QueryCallback callback, QueryDoneCallback doneCallback/* = {} */)
 {
 	if (regexp) {

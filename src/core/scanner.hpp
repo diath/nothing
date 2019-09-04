@@ -56,6 +56,8 @@ class Scanner
 		AddPathResult addPath(const std::string &path);
 		void enqueue(const std::string &path);
 
+		bool removePath(const std::string &path);
+
 		bool isRunning() const;
 
 	private:

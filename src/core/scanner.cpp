@@ -109,6 +109,8 @@ void Scanner::workerTask(const std::string &path)
 			break;
 		}
 
+		// TODO: This should be interrupted when a path has been removed.
+
 		if (entry.is_directory()) {
 			continue;
 		}
@@ -167,6 +169,23 @@ void Scanner::enqueue(const std::string &path)
 
 	queue.push_back(path);
 	cv.notify_one();
+}
+
+bool Scanner::removePath(const std::string &path)
+{
+	if (auto it = std::find(paths.begin(), paths.end(), path); it != paths.end()) {
+		paths.erase(it);
+	} else {
+		return false;
+	}
+
+	std::lock_guard<std::mutex> lock{mutex};
+	if (auto it = std::find(queue.begin(), queue.end(), path); it != queue.end()) {
+		queue.erase(it);
+	}
+
+	database->removeEntries(path);
+	return true;
 }
 
 bool Scanner::isRunning() const

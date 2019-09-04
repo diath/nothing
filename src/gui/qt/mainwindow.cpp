@@ -226,5 +226,5 @@ void MainWindow::onPathAdded(const std::string &dir)
 
 void MainWindow::onPathRemoved(const std::string &dir)
 {
-	//
+	scanner->removePath(dir);
 }
