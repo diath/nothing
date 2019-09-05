@@ -46,10 +46,10 @@ class Database
 		Database &operator =(const Database &) = delete;
 		Database &operator =(Database &&) = delete;
 
-		void addEntry(const Entry &entry);
-		void addEntries(const std::vector<Entry> &entries);
+		bool addEntry(const Entry &entry);
+		bool addEntries(const std::vector<Entry> &entries);
 
-		void removeEntries(const std::string &parent);
+		bool removeEntries(const std::string &parent);
 
 		void query(const std::string &pattern, const bool regexp, QueryCallback callback, QueryDoneCallback doneCallback = {});
 		void queryLike(const std::string &pattern, const QueryCallback &callback, const QueryDoneCallback &doneCallback);

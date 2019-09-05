@@ -16,6 +16,7 @@
 */
 
 #include <cstdio>
+#include <cstdlib>
 #include <regex>
 
 #include "database.hpp"
@@ -40,25 +41,26 @@ void RegexQuery(sqlite3_context *ctx, int argc, sqlite3_value **argv)
 Database::Database()
 {
 	if (sqlite3_threadsafe() == 0) {
-		printf("[Warning] The linked SQLite3 library was not built with the SQLITE_THREADSAFE option.\n");
+		fprintf(stderr, "[Error] The linked SQLite3 library was not built with the SQLITE_THREADSAFE option.\n");
+		std::exit(EXIT_FAILURE);
 	}
 
 	sqlite3_config(SQLITE_CONFIG_SERIALIZED);
 	sqlite3_initialize();
 	if (sqlite3_open_v2(":memory:", &handle, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr) != SQLITE_OK) {
 		fprintf(stderr, "[Error] Failed to open the SQLite3 database.\n");
-		// TODO: Terminate?
+		std::exit(EXIT_FAILURE);
 	}
 
 	char *error = nullptr;
 	if (sqlite3_exec(handle, "CREATE TABLE files (file TEXT, path TEXT, parent TEXT, size INT, perms INT);", nullptr, nullptr, &error) != SQLITE_OK) {
 		fprintf(stderr, "[Error] Failed to create the files table: %s\n", error);
-		// TODO: Terminate?
+		std::exit(EXIT_FAILURE);
 	}
 
 	if (sqlite3_create_function(handle, "regexp", 2, SQLITE_UTF8, nullptr, &RegexQuery, nullptr, nullptr) != SQLITE_OK) {
 		fprintf(stderr, "[Error] Failed to register the regexp function\n");
-		// TODO: Terminate?
+		std::exit(EXIT_FAILURE);
 	}
 }
 
@@ -74,50 +76,49 @@ Database::~Database()
 	sqlite3_shutdown();
 }
 
-void Database::addEntry(const Entry &entry)
+bool Database::addEntry(const Entry &entry)
 {
 	std::lock_guard<std::mutex> lock{mutex};
 
 	sqlite3_stmt *stmt = nullptr;
 	if (sqlite3_prepare(handle, "INSERT INTO files (file, path, parent, size, perms) VALUES (?, ?, ?, ?, ?);", -1, &stmt, nullptr) != SQLITE_OK) {
-		// TODO: Handle gracefully?
-		return;
+		return false;
 	}
 
 	const auto &[name, path, parent, size, perms] = entry;
 
 	if (sqlite3_bind_text(stmt, 1, name.c_str(), -1, nullptr) != SQLITE_OK) {
-		// TODO: Handle gracefully?
-		return;
+		sqlite3_finalize(stmt);
+		return false;
 	}
 
 	if (sqlite3_bind_text(stmt, 2, path.c_str(), -1, nullptr) != SQLITE_OK) {
-		// TODO: Handle gracefully?
-		return;
+		sqlite3_finalize(stmt);
+		return false;
 	}
 
 	if (sqlite3_bind_text(stmt, 3, parent.c_str(), -1, nullptr) != SQLITE_OK) {
-		// TODO: Handle gracefully?
-		return;
+		sqlite3_finalize(stmt);
+		return false;
 	}
 
 	if (sqlite3_bind_int64(stmt, 4, static_cast<sqlite3_int64>(size)) != SQLITE_OK) {
-		// TODO: Handle gracefully?
 		sqlite3_finalize(stmt);
-		return;
+		return false;
 	}
 
 	if (sqlite3_bind_int(stmt, 5, static_cast<int>(perms)) != SQLITE_OK) {
-		// TODO: Handle gracefully?
 		sqlite3_finalize(stmt);
-		return;
+		return false;
 	}
 
 	sqlite3_step(stmt);
 	sqlite3_finalize(stmt);
+
+	return true;
 }
 
-void Database::addEntries(const std::vector<Entry> &entries)
+bool Database::addEntries(const std::vector<Entry> &entries)
 {
 	std::lock_guard<std::mutex> lock{mutex};
 
@@ -125,41 +126,40 @@ void Database::addEntries(const std::vector<Entry> &entries)
 
 	sqlite3_stmt *stmt = nullptr;
 	if (sqlite3_prepare(handle, "INSERT INTO files (file, path, parent, size, perms) VALUES (?, ?, ?, ?, ?);", -1, &stmt, nullptr) != SQLITE_OK) {
-		// TODO: Handle gracefully?
-		return;
+		return false;
 	}
+
+	auto cleanup = [this, stmt] () {
+		sqlite3_exec(handle, "ROLLBACK TRANSACTION", nullptr, nullptr, nullptr);
+		sqlite3_finalize(stmt);
+	};
 
 	for (auto &&entry: entries) {
 		const auto &[name, path, parent, size, perms] = entry;
 
 		if (sqlite3_bind_text(stmt, 1, name.c_str(), -1, nullptr) != SQLITE_OK) {
-			// TODO: Handle gracefully?
-			sqlite3_finalize(stmt);
-			return;
+			cleanup();
+			return false;
 		}
 
 		if (sqlite3_bind_text(stmt, 2, path.c_str(), -1, nullptr) != SQLITE_OK) {
-			// TODO: Handle gracefully?
-			sqlite3_finalize(stmt);
-			return;
+			cleanup();
+			return false;
 		}
 
 		if (sqlite3_bind_text(stmt, 3, parent.c_str(), -1, nullptr) != SQLITE_OK) {
-			// TODO: Handle gracefully?
-			sqlite3_finalize(stmt);
-			return;
+			cleanup();
+			return false;
 		}
 
 		if (sqlite3_bind_int64(stmt, 4, static_cast<sqlite3_int64>(size)) != SQLITE_OK) {
-			// TODO: Handle gracefully?
-			sqlite3_finalize(stmt);
-			return;
+			cleanup();
+			return false;
 		}
 
 		if (sqlite3_bind_int(stmt, 5, static_cast<int>(perms)) != SQLITE_OK) {
-			// TODO: Handle gracefully?
-			sqlite3_finalize(stmt);
-			return;
+			cleanup();
+			return false;
 		}
 
 		sqlite3_step(stmt);
@@ -168,9 +168,11 @@ void Database::addEntries(const std::vector<Entry> &entries)
 
 	sqlite3_finalize(stmt);
 	sqlite3_exec(handle, "END TRANSACTION", nullptr, nullptr, nullptr);
+
+	return true;
 }
 
-void Database::removeEntries(const std::string &parent)
+bool Database::removeEntries(const std::string &parent)
 {
 	std::lock_guard<std::mutex> lock{mutex};
 
@@ -178,19 +180,19 @@ void Database::removeEntries(const std::string &parent)
 
 	sqlite3_stmt *stmt = nullptr;
 	if (sqlite3_prepare(handle, "DELETE FROM files WHERE parent = ?", -1, &stmt, nullptr) != SQLITE_OK) {
-		// TODO: Handle gracefully?
-		return;
+		return false;
 	}
 
 	if (sqlite3_bind_text(stmt, 1, parent.c_str(), -1, nullptr) != SQLITE_OK) {
-		// TODO: Handle gracefully?
 		sqlite3_finalize(stmt);
-		return;
+		return false;
 	}
 
 	sqlite3_step(stmt);
 	sqlite3_finalize(stmt);
 	sqlite3_exec(handle, "END TRANSACTION", nullptr, nullptr, nullptr);
+
+	return true;
 }
 
 void Database::query(const std::string &pattern, const bool regexp, QueryCallback callback, QueryDoneCallback doneCallback/* = {} */)
