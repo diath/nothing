@@ -33,7 +33,12 @@ void RegexQuery(sqlite3_context *ctx, int argc, sqlite3_value **argv)
 	std::string pattern = std::string(reinterpret_cast<const char *>(sqlite3_value_text(argv[0])));
 	std::string file = std::string(reinterpret_cast<const char *>(sqlite3_value_text(argv[1])));
 
-	sqlite3_result_int(ctx, !!std::regex_search(file, std::regex(pattern)));
+	try {
+		sqlite3_result_int(ctx, !!std::regex_search(file, std::regex(pattern)));
+	} catch (const std::regex_error &) {
+		// NOTE: Most commonly, a regex error will occur when someone types unfinished expression, just yield empty result set in that case.
+		sqlite3_result_null(ctx);
+	}
 }
 
 }
