@@ -185,6 +185,8 @@ void MainWindow::onPathAdded(const std::string &dir)
 			message = "The selected path is not a directory.";
 		} else if (result == Scanner::AddPathResult::PathAlreadyAdded) {
 			message = "The selected path has already been added.";
+		} else if (result == Scanner::AddPathResult::ParentPathAlreadyAdded) {
+			message = "The selected path has an existing parent path.";
 		}
 
 		QMessageBox::warning(this, "Path Error", message);
