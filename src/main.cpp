@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 			scanner.stop();
 		} else {
 			db.query(line, false, [] (const std::size_t index, const auto &e) {
-				const auto &[file, _, size, __] = e;
+				const auto &[file, _, __, size, ___] = e;
 				printf("(%ld) Received %s (%d bytes)\n", index, file.c_str(), (int) size);
 			});
 		}
