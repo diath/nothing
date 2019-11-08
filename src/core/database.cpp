@@ -260,7 +260,10 @@ void Database::queryInternal(const std::string &query, const std::string &patter
 		}
 
 		sqlite3_finalize(stmt);
-		doneCallback();
+
+		if (doneCallback) {
+			doneCallback();
+		}
 	});
 }
 
