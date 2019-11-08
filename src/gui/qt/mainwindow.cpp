@@ -17,33 +17,12 @@
 
 #include "mainwindow.hpp"
 
-#include "core/utils.hpp"
-
-namespace {
-
-std::string FileTypeToResource(const FileType type)
-{
-	switch (type) {
-		case FileType::Archive:  return ":src/gui/res/archive.svg";  break;
-		case FileType::Audio:    return ":src/gui/res/audio.svg";    break;
-		case FileType::Document: return ":src/gui/res/document.svg"; break;
-		case FileType::Image:    return ":src/gui/res/image.svg";    break;
-		case FileType::System:   return ":src/gui/res/system.svg";   break;
-		case FileType::Video:    return ":src/gui/res/video.svg";    break;
-		case FileType::Generic:  return {};                           break;
-	}
-
-	return {};
-}
-
-
-} // namespace
-
 MainWindow::MainWindow(int argc, char **argv)
 : QMainWindow{}
 , pathsDialog{new PathsDialog(this)}
 , input{new QLineEdit}
-, table{new QTableWidget}
+, table{new QTableView}
+, model{new TableModel}
 {
 	resize(590, 530);
 	setMinimumSize(590, 530);
@@ -59,11 +38,10 @@ MainWindow::MainWindow(int argc, char **argv)
 	layout->addWidget(input);
 	layout->addWidget(table);
 
-	table->setColumnCount(4);
-	table->setHorizontalHeaderLabels({"File", "Folder", "Size", "Perms"});
-	table->setSelectionBehavior(QAbstractItemView::SelectRows);
+	table->setModel(model);
 	table->setShowGrid(false);
-	table->verticalHeader()->setVisible(false);
+	table->setSelectionBehavior(QAbstractItemView::SelectRows);
+	table->setSelectionMode(QAbstractItemView::SingleSelection);
 	table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
 
 	setCentralWidget(centralWidget);
@@ -114,7 +92,26 @@ void MainWindow::createActions()
 	});
 
 	QMenu *view = menuBar()->addMenu("View");
-	(void) view;
+
+	auto addToggleAction = [this, view] (const char *label, bool *flag) {
+		auto action = view->addAction(label);
+		action->setCheckable(true);
+		action->setChecked(true);
+
+		connect(action, &QAction::toggled, [this, flag] (bool checked) {
+			if (flag) {
+				*flag = checked;
+			}
+
+			onViewSettingsChanged();
+		});
+	};
+
+	addToggleAction("Regexp Search", &viewSettings.useRegexp);
+	view->addSeparator();
+	addToggleAction("Show Icons", &viewSettings.showIcons);
+	addToggleAction("Show Size", &viewSettings.showSize);
+	addToggleAction("Show Permissions", &viewSettings.showPerms);
 
 	QMenu *help = menuBar()->addMenu("Help");
 	help->addAction("Repository", [this] () {
@@ -143,7 +140,7 @@ void MainWindow::createStatus()
 
 void MainWindow::onInputChanged(const std::string &text)
 {
-	table->setRowCount(0);
+	model->clear();
 	database->stopSearchThread();
 
 	if (text.empty()) {
@@ -151,7 +148,7 @@ void MainWindow::onInputChanged(const std::string &text)
 	}
 
 	++queryIndex;
-	database->query(text, false, [this] (const std::size_t index, const auto &entry) {
+	database->query(text, viewSettings.useRegexp, [this] (const std::size_t index, const auto &entry) {
 		emit onEntry(index, entry);
 	}, [this] () {
 		emit onDone();
@@ -164,42 +161,12 @@ void MainWindow::addEntry(const std::size_t index, const Database::Entry &entry)
 		return;
 	}
 
-	const auto &[file, path, _, size, perms] = entry;
-	table->insertRow(table->rowCount());
-
-	auto createItem = [] () {
-		auto item = new QTableWidgetItem();
-		item->setFlags(item->flags() &  ~Qt::ItemIsEditable);
-		return item;
-	};
-
-	auto fileItem = createItem();
-	fileItem->setText(QString::fromStdString(file));
-
-	auto pathItem = createItem();
-	pathItem->setText(QString::fromStdString(path));
-
-	auto sizeItem = createItem();
-	sizeItem->setText(QString("%1").arg(QString::fromStdString(HumanReadableSize(size))));
-	sizeItem->setTextAlignment(Qt::AlignVCenter | Qt::AlignRight);
-
-	auto permsItem = createItem();
-	permsItem->setText(QString("%1").arg(QString::fromStdString(HumanReadablePerms(perms))));
-	permsItem->setTextAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
-
-	table->setItem(table->rowCount() - 1, 0, fileItem);
-	table->setItem(table->rowCount() - 1, 1, pathItem);
-	table->setItem(table->rowCount() - 1, 2, sizeItem);
-	table->setItem(table->rowCount() - 1, 3, permsItem);
-
-	auto res = FileTypeToResource(GetFileType(file));
-	if (!res.empty()) {
-		fileItem->setIcon(QIcon(QString::fromStdString(res)));
-	}
+	model->addEntry(entry);
 }
 
 void MainWindow::fitContents()
 {
+	table->resizeRowsToContents();
 	table->resizeColumnToContents(0); // name
 	table->resizeColumnToContents(2); // size
 	table->resizeColumnToContents(3); // perms
@@ -227,4 +194,11 @@ void MainWindow::onPathAdded(const std::string &dir)
 void MainWindow::onPathRemoved(const std::string &dir)
 {
 	scanner->removePath(dir);
+}
+
+void MainWindow::onViewSettingsChanged()
+{
+	model->setShowIcons(viewSettings.showIcons);
+	table->setColumnHidden(2, !viewSettings.showSize);
+	table->setColumnHidden(3, !viewSettings.showPerms);
 }

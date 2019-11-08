@@ -25,6 +25,7 @@ if(WITH_GUI_QT)
 
 	set(src_gui
 		src/gui/qt/main.cpp
+		src/gui/qt/tablemodel.cpp
 		src/gui/qt/mainwindow.cpp
 		src/gui/qt/pathsdialog.cpp
 		src/gui/res/res.qrc
@@ -47,4 +48,4 @@ set (src
 )
 
 add_executable(nothing ${src})
-target_link_libraries(nothing ${CMAKE_THREAD_LIBS_INIT} sqlite3 ${lib_gui})
+target_link_libraries(nothing ${CMAKE_THREAD_LIBS_INIT} ${SQLite3_LIBRARIES} ${lib_gui})

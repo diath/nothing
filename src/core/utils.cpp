@@ -44,7 +44,7 @@ std::string HumanReadableSize(const std::uintmax_t size)
 {
 	constexpr double Div = 1000.0;
 	static const std::vector<std::string> Units = {
-		"B", "kB", "MB", "GB", "TB"
+		"bytes", "kB", "MB", "GB", "TB"
 	};
 
 	std::size_t index = 0;

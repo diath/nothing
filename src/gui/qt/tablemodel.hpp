@@ -15,60 +15,40 @@
 	THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef NOTHING_MAINWINDOW_HPP
-#define NOTHING_MAINWINDOW_HPP
+#ifndef NOTHING_TABLEMODEL_HPP
+#define NOTHING_TABLEMODEL_HPP
 
-#include <QtWidgets>
+#include <QAbstractTableModel>
+#include <QPixmap>
 
 #include "core/database.hpp"
-#include "core/scanner.hpp"
+#include "core/utils.hpp"
 
-#include "tablemodel.hpp"
-#include "pathsdialog.hpp"
+#include <unordered_map>
+#include <vector>
 
-class MainWindow: public QMainWindow
+class TableModel: public QAbstractTableModel
 {
 	Q_OBJECT
 
 	public:
-		MainWindow(int argc, char **argv);
+		TableModel(QObject *parent = nullptr);
+
+		int rowCount(const QModelIndex &parent = QModelIndex()) const;
+		int columnCount(const QModelIndex &parent = QModelIndex()) const;
+
+		QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+		QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
+
+		void addEntry(const Database::Entry &entry);
+		void clear();
+
+		void setShowIcons(const bool show);
 
 	private:
-		PathsDialog *pathsDialog = nullptr;
-
-		void createActions();
-		void createStatus();
-
-		void onInputChanged(const std::string &text);
-
-		void onPathAdded(const std::string &dir);
-		void onPathRemoved(const std::string &dir);
-
-		void onViewSettingsChanged();
-
-		QLineEdit *input = nullptr;
-		QTableView *table = nullptr;
-		TableModel *model = nullptr;
-
-		std::unique_ptr<Database> database = nullptr;
-		std::unique_ptr<Scanner> scanner = nullptr;
-
-		std::size_t queryIndex = 0;
-
-		struct {
-			bool useRegexp = true;
-			bool showIcons = true;
-			bool showSize = true;
-			bool showPerms = true;
-		} viewSettings;
-
-	private slots:
-		void addEntry(const std::size_t index, const Database::Entry &entry);
-		void fitContents();
-
-	signals:
-		void onEntry(const std::size_t index, const Database::Entry &entry);
-		void onDone();
+		std::vector<Database::Entry> entries = {};
+		std::unordered_map<FileType, QPixmap> icons = {};
+		bool showIcons = true;
 };
 
-#endif // NOTHING_MAINWINDOW_HPP
+#endif
