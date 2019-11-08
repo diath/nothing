@@ -34,6 +34,8 @@ int main(int argc, char **argv)
 				fprintf(stderr, "Failed to add path %s, reason: path not a directory.\n", argv[i]);
 			} else if (result == Scanner::AddPathResult::PathAlreadyAdded) {
 				fprintf(stderr, "Failed to add path %s, reason: path already added.\n", argv[i]);
+			} else if (result == Scanner::AddPathResult::ParentPathAlreadyAdded) {
+				fprintf(stderr, "Failed to add path %s, reason: path has an existing parent path.\n", argv[i]);
 			} else if (result == Scanner::AddPathResult::Ok) {
 				printf("Added %s.\n", argv[i]);
 			}

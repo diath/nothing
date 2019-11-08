@@ -150,6 +150,19 @@ Scanner::AddPathResult Scanner::addPath(const std::string &path)
 		return AddPathResult::PathAlreadyAdded;
 	}
 
+	fs::path added = path;
+	for (const auto &path: paths) {
+		fs::path base = path;
+		while (added.has_parent_path() && added != added.root_path()) {
+			const auto parent = added.parent_path();
+			if (base == added) {
+				return AddPathResult::ParentPathAlreadyAdded;
+			}
+
+			added = parent;
+		}
+	}
+
 	paths.push_back(path);
 
 	if (running) {

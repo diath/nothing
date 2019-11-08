@@ -35,6 +35,7 @@ class Scanner
 			PathDoesNotExist,
 			PathNotDirectory,
 			PathAlreadyAdded,
+			ParentPathAlreadyAdded,
 			Ok,
 		};
 
