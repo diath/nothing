@@ -56,7 +56,12 @@ std::string HumanReadableSize(const std::uintmax_t size)
 	}
 
 	std::stringstream s{};
-	s << std::fixed << std::setprecision(2) << result << ' ' << Units[index];
+	if (index == 0) {
+		s << std::fixed << std::setprecision(0) << result << ' ' << Units[index];
+	} else {
+		s << std::fixed << std::setprecision(2) << result << ' ' << Units[index];
+	}
+
 	return s.str();
 }
 
@@ -110,7 +115,7 @@ FileType GetFileType(std::string name)
 		{".so", FileType::System},
 	};
 
-	auto size = name.size();
+	const auto size = name.size();
 	if (!size) {
 		return FileType::Generic;
 	}
