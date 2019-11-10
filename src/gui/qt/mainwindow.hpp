@@ -32,6 +32,7 @@ class MainWindow: public QMainWindow
 
 	public:
 		MainWindow(int argc, char **argv);
+		~MainWindow();
 
 	private:
 		PathsDialog *pathsDialog = nullptr;
@@ -45,6 +46,9 @@ class MainWindow: public QMainWindow
 		void onPathRemoved(const std::string &dir);
 
 		void onViewSettingsChanged();
+
+		QList<QString> loadSettings();
+		void saveSettings();
 
 		QLineEdit *input = nullptr;
 		QTableView *table = nullptr;

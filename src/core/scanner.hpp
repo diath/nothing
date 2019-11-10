@@ -61,6 +61,10 @@ class Scanner
 
 		bool isRunning() const;
 
+		std::vector<std::string> getPaths() const {
+			return paths;
+		}
+
 	private:
 		Database *database = nullptr;
 

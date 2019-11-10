@@ -17,6 +17,8 @@
 
 #include "mainwindow.hpp"
 
+#include <QSettings>
+
 MainWindow::MainWindow(int argc, char **argv)
 : QMainWindow{}
 , pathsDialog{new PathsDialog(this)}
@@ -24,8 +26,15 @@ MainWindow::MainWindow(int argc, char **argv)
 , table{new QTableView}
 , model{new TableModel}
 {
+	qRegisterMetaType<Database::Entry>("Database::Entry");
+	qRegisterMetaType<std::size_t>("std::size_t");
+	qRegisterMetaType<QList<QString>>("QList");
+	qRegisterMetaTypeStreamOperators<QList<QString>>("QList<QString>");
+
 	resize(590, 530);
 	setMinimumSize(590, 530);
+
+	const auto paths = loadSettings();
 
 	createActions();
 	createStatus();
@@ -59,11 +68,13 @@ MainWindow::MainWindow(int argc, char **argv)
 		}
 	}
 
+	for (auto &&path: paths) {
+		pathsDialog->addPath(path.toStdString());
+		scanner->addPath(path.toStdString());
+	}
+
 	scanner->run();
 	statusBar()->showMessage("Scanning the paths...");
-
-	qRegisterMetaType<Database::Entry>("Database::Entry");
-	qRegisterMetaType<std::size_t>("std::size_t");
 
 	connect(this, &MainWindow::onEntry, this, [this] (const std::size_t index, const Database::Entry &entry) {
 		addEntry(index, entry);
@@ -81,6 +92,11 @@ MainWindow::MainWindow(int argc, char **argv)
 	});
 }
 
+MainWindow::~MainWindow()
+{
+	saveSettings();
+}
+
 void MainWindow::createActions()
 {
 	QMenu *program = menuBar()->addMenu("Program");
@@ -96,7 +112,10 @@ void MainWindow::createActions()
 	auto addToggleAction = [this, view] (const char *label, bool *flag) {
 		auto action = view->addAction(label);
 		action->setCheckable(true);
-		action->setChecked(true);
+
+		if (flag) {
+			action->setChecked(*flag);
+		}
 
 		connect(action, &QAction::toggled, [this, flag] (bool checked) {
 			if (flag) {
@@ -131,6 +150,8 @@ void MainWindow::createActions()
 			"Version 0.1\n"
 			"Copyright (c) 2019 Kamil Chojnowski Y29udGFjdEBkaWF0aC5uZXQ=");
 	});
+
+	onViewSettingsChanged();
 }
 
 void MainWindow::createStatus()
@@ -203,4 +224,39 @@ void MainWindow::onViewSettingsChanged()
 	model->setShowIcons(viewSettings.showIcons);
 	table->setColumnHidden(2, !viewSettings.showSize);
 	table->setColumnHidden(3, !viewSettings.showPerms);
+}
+
+QList<QString> MainWindow::loadSettings()
+{
+	QSettings settings("nothing", "nothing");
+
+	restoreGeometry(settings.value("geometry").toByteArray());
+	restoreState(settings.value("windowState").toByteArray());
+
+	viewSettings.useRegexp = settings.value("useRegexp", true).toBool();
+	viewSettings.showIcons = settings.value("showIcons", true).toBool();
+	viewSettings.showSize = settings.value("showSize", true).toBool();
+	viewSettings.showPerms = settings.value("showPerms", true).toBool();
+
+	return settings.value("paths").value<QList<QString>>();
+}
+
+void MainWindow::saveSettings()
+{
+	QSettings settings("nothing", "nothing");
+
+	settings.setValue("geometry", saveGeometry());
+	settings.setValue("windowState", saveState());
+
+	settings.setValue("useRegexp", viewSettings.useRegexp);
+	settings.setValue("showIcons", viewSettings.showIcons);
+	settings.setValue("showSize", viewSettings.showSize);
+	settings.setValue("showPerms", viewSettings.showPerms);
+
+	QList<QString> paths = {};
+	for (auto &&path: scanner->getPaths()) {
+		paths.append(QString::fromStdString(path));
+	}
+
+	settings.setValue("paths", QVariant::fromValue(paths));
 }
