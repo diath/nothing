@@ -53,11 +53,13 @@ class MainWindow: public QMainWindow
 		QLineEdit *input = nullptr;
 		QTableView *table = nullptr;
 		TableModel *model = nullptr;
+		QTimer *timer = nullptr;
 
 		std::unique_ptr<Database> database = nullptr;
 		std::unique_ptr<Scanner> scanner = nullptr;
 
 		std::size_t queryIndex = 0;
+		std::string queryText = {};
 
 		struct {
 			bool useRegexp = true;

@@ -25,6 +25,7 @@ MainWindow::MainWindow(int argc, char **argv)
 , input{new QLineEdit}
 , table{new QTableView}
 , model{new TableModel}
+, timer{new QTimer{this}}
 {
 	qRegisterMetaType<Database::Entry>("Database::Entry");
 	qRegisterMetaType<std::size_t>("std::size_t");
@@ -75,6 +76,20 @@ MainWindow::MainWindow(int argc, char **argv)
 
 	scanner->run();
 	statusBar()->showMessage("Scanning the paths...");
+
+	timer->setSingleShot(true);
+	connect(timer, &QTimer::timeout, [this] {
+		if (queryText.empty()) {
+			return;
+		}
+
+		++queryIndex;
+		database->query(queryText, viewSettings.useRegexp, [this] (const std::size_t index, const auto &entry) {
+			emit onEntry(index, entry);
+		}, [this] () {
+			emit onDone();
+		});
+	});
 
 	connect(this, &MainWindow::onEntry, this, [this] (const std::size_t index, const Database::Entry &entry) {
 		addEntry(index, entry);
@@ -163,17 +178,13 @@ void MainWindow::onInputChanged(const std::string &text)
 {
 	model->clear();
 	database->stopSearchThread();
+	queryText = text;
 
 	if (text.empty()) {
 		return;
 	}
 
-	++queryIndex;
-	database->query(text, viewSettings.useRegexp, [this] (const std::size_t index, const auto &entry) {
-		emit onEntry(index, entry);
-	}, [this] () {
-		emit onDone();
-	});
+	timer->start(200);
 }
 
 void MainWindow::addEntry(const std::size_t index, const Database::Entry &entry)
