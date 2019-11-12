@@ -51,9 +51,6 @@ class Scanner
 		void run();
 		void stop();
 
-		void worker();
-		void workerTask(const std::string &path);
-
 		AddPathResult addPath(const std::string &path);
 		void enqueue(const std::string &path);
 
@@ -78,6 +75,9 @@ class Scanner
 		std::condition_variable cv{};
 
 		std::vector<std::thread> threads{};
+
+		void worker();
+		void workerTask(const std::string &path);
 };
 
 #endif

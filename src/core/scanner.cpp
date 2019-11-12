@@ -134,6 +134,10 @@ void Scanner::workerTask(const std::string &path)
 			counter = 0;
 		}
 	}
+
+	if (running && !entries.empty()) {
+		database->addEntries(entries);
+	}
 }
 
 Scanner::AddPathResult Scanner::addPath(const std::string &path)
