@@ -19,6 +19,7 @@
 #define NOTHING_UTILS_HPP
 
 #include <cstdint>
+#include <ctime>
 #include <filesystem>
 #include <string>
 
@@ -34,7 +35,11 @@ enum class FileType
 };
 
 std::string HumanReadablePerms(const std::filesystem::perms perms);
+std::string HumanReadablePermsOwner(const std::filesystem::perms perms);
+std::string HumanReadablePermsGroup(const std::filesystem::perms perms);
+std::string HumanReadablePermsOther(const std::filesystem::perms perms);
 std::string HumanReadableSize(const std::uintmax_t size);
+std::string HumanReadableTime(const std::time_t time);
 FileType GetFileType(std::string name);
 
 #endif

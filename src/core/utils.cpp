@@ -22,10 +22,10 @@
 
 #include "utils.hpp"
 
-std::string HumanReadablePerms(const std::filesystem::perms perms)
-{
-	namespace fs = std::filesystem;
+namespace fs = std::filesystem;
 
+std::string HumanReadablePerms(const fs::perms perms)
+{
 	std::stringstream s{};
 	s << ((perms & fs::perms::owner_read)   != fs::perms::none ? "r" : "-")
 	  << ((perms & fs::perms::owner_write)  != fs::perms::none ? "w" : "-")
@@ -36,6 +36,75 @@ std::string HumanReadablePerms(const std::filesystem::perms perms)
 	  << ((perms & fs::perms::others_read)  != fs::perms::none ? "r" : "-")
 	  << ((perms & fs::perms::others_write) != fs::perms::none ? "w" : "-")
 	  << ((perms & fs::perms::others_exec)  != fs::perms::none ? "x" : "-");
+
+	return s.str();
+}
+
+std::string HumanReadablePermsOwner(const fs::perms perms)
+{
+	std::stringstream s{};
+	bool added = false;
+
+	auto append = [perms, &s, &added] (const fs::perms flag, const std::string &label) {
+		if ((perms & flag) != fs::perms::none) {
+			if (added) {
+				s << ", ";
+			}
+
+			s << label;
+			added = true;
+		}
+	};
+
+	append(fs::perms::owner_read, "Read");
+	append(fs::perms::owner_write, "Write");
+	append(fs::perms::owner_exec, "Execute");
+
+	return s.str();
+}
+
+std::string HumanReadablePermsGroup(const fs::perms perms)
+{
+	std::stringstream s{};
+	bool added = false;
+
+	auto append = [perms, &s, &added] (const fs::perms flag, const std::string &label) {
+		if ((perms & flag) != fs::perms::none) {
+			if (added) {
+				s << ", ";
+			}
+
+			s << label;
+			added = true;
+		}
+	};
+
+	append(fs::perms::group_read, "Read");
+	append(fs::perms::group_write, "Write");
+	append(fs::perms::group_exec, "Execute");
+
+	return s.str();
+}
+
+std::string HumanReadablePermsOther(const fs::perms perms)
+{
+	std::stringstream s{};
+	bool added = false;
+
+	auto append = [perms, &s, &added] (const fs::perms flag, const std::string &label) {
+		if ((perms & flag) != fs::perms::none) {
+			if (added) {
+				s << ", ";
+			}
+
+			s << label;
+			added = true;
+		}
+	};
+
+	append(fs::perms::others_read, "Read");
+	append(fs::perms::others_write, "Write");
+	append(fs::perms::others_exec, "Execute");
 
 	return s.str();
 }
@@ -63,6 +132,15 @@ std::string HumanReadableSize(const std::uintmax_t size)
 	}
 
 	return s.str();
+}
+
+std::string HumanReadableTime(const std::time_t time)
+{
+	auto tm = std::localtime(&time);
+
+	char buffer[512] = {0};
+	std::strftime(buffer, sizeof(buffer), "%d %b %Y - %H:%M:%S", tm);
+	return buffer;
 }
 
 FileType GetFileType(std::string name)
