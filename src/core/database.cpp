@@ -41,7 +41,7 @@ void RegexQuery(sqlite3_context *ctx, int argc, sqlite3_value **argv)
 	}
 }
 
-}
+} // namespace <anonymous>
 
 Database::Database()
 {

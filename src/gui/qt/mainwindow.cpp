@@ -19,6 +19,18 @@
 
 #include <QSettings>
 
+namespace {
+
+void OpenPath(const std::string &link)
+{
+	QProcess proc;
+	proc.setProgram("xdg-open");
+	proc.setArguments(QStringList() << QString::fromStdString(link));
+	proc.startDetached();
+}
+
+} // namespace <anonymous>
+
 MainWindow::MainWindow(int argc, char **argv)
 : QMainWindow{}
 , pathsDialog{new PathsDialog(this)}
@@ -318,7 +330,7 @@ void MainWindow::onTableDoubleClicked(const QModelIndex &index)
 
 	const auto &[name, path, _, __, ___] = *entry;
 	auto fsPath = std::filesystem::path(path) / name;
-	QDesktopServices::openUrl(QString::fromStdString(fsPath));
+	OpenPath(fsPath);
 }
 
 void MainWindow::onContextMenuRequested(const QPoint &point)
@@ -338,13 +350,13 @@ void MainWindow::onContextMenuRequested(const QPoint &point)
 	auto menu = new QMenu(table);
 	menu->addAction("Open File", [name, path] () {
 		auto fsPath = std::filesystem::path(path) / name;
-		QDesktopServices::openUrl(QString::fromStdString(fsPath));
+		OpenPath(fsPath);
 	});
 	menu->addAction("Open Path", [path] () {
-		QDesktopServices::openUrl(QString::fromStdString(path));
+		OpenPath(path);
 	});
 	menu->addAction("Open Parent", [parent] () {
-		QDesktopServices::openUrl(QString::fromStdString(parent));
+		OpenPath(parent);
 	});
 	menu->addSeparator();
 	menu->addAction("Properties", [this, entry] () {
