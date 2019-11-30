@@ -58,6 +58,7 @@ class MainWindow: public QMainWindow
 		QList<QString> loadSettings();
 		void saveSettings();
 
+		void onTableDoubleClicked(const QModelIndex &index);
 		void onContextMenuRequested(const QPoint &point);
 
 		PathsDialog *pathsDialog = nullptr;

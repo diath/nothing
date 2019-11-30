@@ -57,6 +57,9 @@ MainWindow::MainWindow(int argc, char **argv)
 	table->setContextMenuPolicy(Qt::CustomContextMenu);
 	table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
 
+	connect(table, &QTableView::doubleClicked, [this] (const QModelIndex &index) {
+		onTableDoubleClicked(index);
+	});
 	connect(table, &QTableView::customContextMenuRequested, [this] (const QPoint &point) {
 		onContextMenuRequested(point);
 	});
@@ -300,6 +303,22 @@ void MainWindow::saveSettings()
 	}
 
 	settings.setValue("paths", QVariant::fromValue(paths));
+}
+
+void MainWindow::onTableDoubleClicked(const QModelIndex &index)
+{
+	if (!index.isValid()) {
+		return;
+	}
+
+	auto entry = model->entry(index.row());
+	if (!entry) {
+		return;
+	}
+
+	const auto &[name, path, _, __, ___] = *entry;
+	auto fsPath = std::filesystem::path(path) / name;
+	QDesktopServices::openUrl(QString::fromStdString(fsPath));
 }
 
 void MainWindow::onContextMenuRequested(const QPoint &point)
