@@ -128,9 +128,11 @@ void TableModel::addEntry(const Database::Entry &entry)
 void TableModel::clear()
 {
 	entries.clear();
+	emit layoutChanged();
 }
 
 void TableModel::setShowIcons(const bool show)
 {
 	showIcons = show;
+	emit layoutChanged();
 }
