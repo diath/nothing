@@ -40,6 +40,9 @@ class MainWindow: public QMainWindow
 		MainWindow(int argc, char **argv);
 		~MainWindow();
 
+	protected:
+		void keyPressEvent(QKeyEvent *event) override;
+
 	private:
 		PathsDialog *pathsDialog = nullptr;
 

@@ -124,6 +124,17 @@ MainWindow::~MainWindow()
 	saveSettings();
 }
 
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+	if (event->key() == Qt::Key_F6) {
+		if (input->hasFocus()) {
+			table->setFocus(Qt::OtherFocusReason);
+		} else {
+			input->setFocus(Qt::OtherFocusReason);
+		}
+	}
+}
+
 void MainWindow::createActions()
 {
 	QMenu *program = menuBar()->addMenu("Program");
