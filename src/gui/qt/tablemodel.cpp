@@ -80,8 +80,8 @@ QVariant TableModel::data(const QModelIndex &index, int role/* = Qt::DisplayRole
 		switch (index.column()) {
 			case 0: return QString::fromStdString(file);
 			case 1: return QString::fromStdString(path);
-			case 2: return QString("%1").arg(QString::fromStdString(HumanReadableSize(size)));
-			case 3: return QString("%1").arg(QString::fromStdString(HumanReadablePerms(perms)));
+			case 2: return QString::fromStdString(HumanReadableSize(size));
+			case 3: return QString::fromStdString(HumanReadablePerms(perms));
 		}
 	} else if (showIcons && role == Qt::DecorationRole) {
 		switch (index.column()) {
@@ -135,4 +135,13 @@ void TableModel::setShowIcons(const bool show)
 {
 	showIcons = show;
 	emit layoutChanged();
+}
+
+Database::Entry *TableModel::entry(const int index)
+{
+	if (index < 0 || index >= static_cast<int>(entries.size())) {
+		return nullptr;
+	}
+
+	return &entries[index];
 }

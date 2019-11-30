@@ -39,10 +39,10 @@ class PathsDialog: public QDialog
 
 		void reject() final;
 
-		void onBrowsePressed();
-		void onAddPressed();
-		void onRemovePressed();
-		void onClosePressed();
+		void onBrowseClicked();
+		void onAddClicked();
+		void onRemoveClicked();
+		void onCloseClicked();
 
 	signals:
 		void onPathAdded(const std::string &path);

@@ -28,6 +28,7 @@ if(WITH_GUI_QT)
 		src/gui/qt/tablemodel.cpp
 		src/gui/qt/mainwindow.cpp
 		src/gui/qt/pathsdialog.cpp
+		src/gui/qt/propsdialog.cpp
 		src/gui/res/res.qrc
 	)
 

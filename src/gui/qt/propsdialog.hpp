@@ -15,38 +15,37 @@
 	THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-// TODO: WinAPI FindFirstChangeNotification()
+#ifndef NOTHING_PROPSDIALOG_HPP
+#define NOTHING_PROPSDIALOG_HPP
 
-#include "watcher_windows.hpp"
+#include <QtWidgets>
 
-Watcher::Watcher(Database *database)
-: database{database}
+#include "core/database.hpp"
+
+class PropsDialog: public QDialog
 {
-}
+	Q_OBJECT
 
-Watcher::~Watcher()
-{
-	stop();
-}
+	public:
+		PropsDialog(QWidget *parent);
 
-void Watcher::run()
-{
-	std::printf("[Watcher] run(): Function not implemented on Windows\n");
-}
+		void load(const Database::Entry *entry);
 
-void Watcher::stop()
-{
-	std::printf("[Watcher] stop(): Function not implemented on Windows\n");
-}
+	private:
+		QLabel *name = nullptr;
+		QLabel *path = nullptr;
+		QLabel *parentPath = nullptr;
+		QLabel *owner = nullptr;
+		QLabel *group = nullptr;
+		QLabel *other = nullptr;
+		QLabel *modified = nullptr;
+		QLabel *accessed = nullptr;
+		QLabel *size = nullptr;
+		QPushButton *close = nullptr;
 
-bool Watcher::watch(const std::string &path)
-{
-	std::printf("[Watcher] watch(): Function not implemented on Windows\n");
-	return false;
-}
+		void reject() final;
 
-bool Watcher::unwatch(const std::string &path)
-{
-	std::printf("[Watcher] unwatch(): Function not implemented on Windows\n");
-	return false;
-}
+		void onClosePressed();
+};
+
+#endif // NOTHING_PROPSDIALOG_HPP

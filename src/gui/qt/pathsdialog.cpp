@@ -44,17 +44,17 @@ PathsDialog::PathsDialog(QWidget *parent)
 
 	path->setReadOnly(true);
 
-	connect(browse, &QPushButton::pressed, [this] () {
-		onBrowsePressed();
+	connect(browse, &QPushButton::clicked, [this] () {
+		onBrowseClicked();
 	});
-	connect(add, &QPushButton::pressed, [this] () {
-		onAddPressed();
+	connect(add, &QPushButton::clicked, [this] () {
+		onAddClicked();
 	});
-	connect(remove, &QPushButton::pressed, [this] () {
-		onRemovePressed();
+	connect(remove, &QPushButton::clicked, [this] () {
+		onRemoveClicked();
 	});
-	connect(close, &QPushButton::pressed, [this] () {
-		onClosePressed();
+	connect(close, &QPushButton::clicked, [this] () {
+		onCloseClicked();
 	});
 
 	setWindowTitle("Path Manager");
@@ -66,7 +66,7 @@ void PathsDialog::reject()
 	QDialog::reject();
 }
 
-void PathsDialog::onBrowsePressed()
+void PathsDialog::onBrowseClicked()
 {
 	auto dir = QFileDialog::getExistingDirectory(this, "Select Directory");
 	if (dir.isEmpty()) {
@@ -76,7 +76,7 @@ void PathsDialog::onBrowsePressed()
 	path->setText(dir);
 }
 
-void PathsDialog::onAddPressed()
+void PathsDialog::onAddClicked()
 {
 	auto dir = path->text();
 	if (dir.isEmpty()) {
@@ -89,7 +89,7 @@ void PathsDialog::onAddPressed()
 	path->setText("");
 }
 
-void PathsDialog::onRemovePressed()
+void PathsDialog::onRemoveClicked()
 {
 	auto item = list->currentItem();
 	if (!item) {
@@ -109,7 +109,7 @@ void PathsDialog::onRemovePressed()
 	emit onPathRemoved(dir.toStdString());
 }
 
-void PathsDialog::onClosePressed()
+void PathsDialog::onCloseClicked()
 {
 	path->setText("");
 	hide();

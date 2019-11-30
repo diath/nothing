@@ -31,6 +31,7 @@
 
 #include "tablemodel.hpp"
 #include "pathsdialog.hpp"
+#include "propsdialog.hpp"
 
 class MainWindow: public QMainWindow
 {
@@ -41,11 +42,9 @@ class MainWindow: public QMainWindow
 		~MainWindow();
 
 	protected:
-		void keyPressEvent(QKeyEvent *event) override;
+		void keyPressEvent(QKeyEvent *event) final;
 
 	private:
-		PathsDialog *pathsDialog = nullptr;
-
 		void createActions();
 		void createStatus();
 
@@ -58,6 +57,11 @@ class MainWindow: public QMainWindow
 
 		QList<QString> loadSettings();
 		void saveSettings();
+
+		void onContextMenuRequested(const QPoint &point);
+
+		PathsDialog *pathsDialog = nullptr;
+		PropsDialog *propsDialog = nullptr;
 
 		QLineEdit *input = nullptr;
 		QTableView *table = nullptr;

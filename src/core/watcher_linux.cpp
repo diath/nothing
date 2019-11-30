@@ -248,7 +248,7 @@ void Watcher::onEvent()
 		while (index < size) {
 			auto event = reinterpret_cast<inotify_event *>(&buffer[index]);
 			if (event->len > 0) {
-				if ((event->mask & IN_CREATE) || (event->mask &IN_MOVED_TO)) {
+				if ((event->mask & IN_CREATE) || (event->mask & IN_MOVED_TO)) {
 					if ((event->mask & IN_ISDIR)) {
 						onDirectoryCreated(event->wd, event->name);
 					} else {

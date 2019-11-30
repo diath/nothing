@@ -22,6 +22,7 @@
 MainWindow::MainWindow(int argc, char **argv)
 : QMainWindow{}
 , pathsDialog{new PathsDialog(this)}
+, propsDialog{new PropsDialog(this)}
 , input{new QLineEdit}
 , table{new QTableView}
 , model{new TableModel}
@@ -52,7 +53,13 @@ MainWindow::MainWindow(int argc, char **argv)
 	table->setShowGrid(false);
 	table->setSelectionBehavior(QAbstractItemView::SelectRows);
 	table->setSelectionMode(QAbstractItemView::SingleSelection);
+	table->setAlternatingRowColors(true);
+	table->setContextMenuPolicy(Qt::CustomContextMenu);
 	table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+
+	connect(table, &QTableView::customContextMenuRequested, [this] (const QPoint &point) {
+		onContextMenuRequested(point);
+	});
 
 	setCentralWidget(centralWidget);
 
@@ -293,4 +300,40 @@ void MainWindow::saveSettings()
 	}
 
 	settings.setValue("paths", QVariant::fromValue(paths));
+}
+
+void MainWindow::onContextMenuRequested(const QPoint &point)
+{
+	auto indexes = table->selectionModel()->selectedRows();
+	if (indexes.size() <= 0) {
+		return;
+	}
+
+	auto entry = model->entry(indexes[0].row());
+	if (!entry) {
+		return;
+	}
+
+	const auto &[name, path, parent, _, __] = *entry;
+
+	auto menu = new QMenu(table);
+	menu->addAction("Open File", [name, path] () {
+		auto fsPath = std::filesystem::path(path) / name;
+		QDesktopServices::openUrl(QString::fromStdString(fsPath));
+	});
+	menu->addAction("Open Path", [path] () {
+		QDesktopServices::openUrl(QString::fromStdString(path));
+	});
+	menu->addAction("Open Parent", [parent] () {
+		QDesktopServices::openUrl(QString::fromStdString(parent));
+	});
+	menu->addSeparator();
+	menu->addAction("Properties", [this, entry] () {
+		propsDialog->load(entry);
+		propsDialog->show();
+	});
+
+	auto position = table->viewport()->mapToGlobal(point);
+	position += {5, 5};
+	menu->exec(position);
 }

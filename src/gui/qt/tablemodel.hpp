@@ -45,6 +45,8 @@ class TableModel: public QAbstractTableModel
 
 		void setShowIcons(const bool show);
 
+		Database::Entry *entry(const int index);
+
 	private:
 		std::vector<Database::Entry> entries = {};
 		std::unordered_map<FileType, QPixmap> icons = {};
