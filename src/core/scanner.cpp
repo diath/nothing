@@ -118,14 +118,12 @@ void Scanner::workerTask(const std::string &path)
 		std::error_code ec{};
 
 		auto &filePath = entry.path();
-		auto status = entry.status();
-
 		entries.emplace_back(
 			filePath.filename().string(),
 			filePath.parent_path().string(),
 			path,
 			entry.file_size(ec),
-			status.permissions()
+			entry.status().permissions()
 		);
 
 		if (++counter == BatchSize) {

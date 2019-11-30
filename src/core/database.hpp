@@ -49,7 +49,9 @@ class Database
 		bool addEntry(const Entry &entry);
 		bool addEntries(const std::vector<Entry> &entries);
 
+		bool removeEntry(const std::string &name, const std::string &path);
 		bool removeEntries(const std::string &parent);
+		bool removeEntriesByPath(const std::string &path);
 
 		void query(const std::string &pattern, const bool regexp, QueryCallback callback, QueryDoneCallback doneCallback = {});
 		void queryLike(const std::string &pattern, const QueryCallback &callback, const QueryDoneCallback &doneCallback);

@@ -141,7 +141,6 @@ bool Database::addEntries(const std::vector<Entry> &entries)
 
 	for (auto &&entry: entries) {
 		const auto &[name, path, parent, size, perms] = entry;
-
 		if (sqlite3_bind_text(stmt, 1, name.c_str(), -1, nullptr) != SQLITE_OK) {
 			cleanup();
 			return false;
@@ -177,6 +176,31 @@ bool Database::addEntries(const std::vector<Entry> &entries)
 	return true;
 }
 
+bool Database::removeEntry(const std::string &name, const std::string &path)
+{
+	std::lock_guard<std::mutex> lock{mutex};
+
+	sqlite3_stmt *stmt = nullptr;
+	if (sqlite3_prepare(handle, "DELETE FROM files WHERE file = ? AND path = ?;", -1, &stmt, nullptr) != SQLITE_OK) {
+		return false;
+	}
+
+	if (sqlite3_bind_text(stmt, 1, name.c_str(), -1, nullptr) != SQLITE_OK) {
+		sqlite3_finalize(stmt);
+		return false;
+	}
+
+	if (sqlite3_bind_text(stmt, 2, path.c_str(), -1, nullptr) != SQLITE_OK) {
+		sqlite3_finalize(stmt);
+		return false;
+	}
+
+	sqlite3_step(stmt);
+	sqlite3_finalize(stmt);
+
+	return true;
+}
+
 bool Database::removeEntries(const std::string &parent)
 {
 	std::lock_guard<std::mutex> lock{mutex};
@@ -189,6 +213,29 @@ bool Database::removeEntries(const std::string &parent)
 	}
 
 	if (sqlite3_bind_text(stmt, 1, parent.c_str(), -1, nullptr) != SQLITE_OK) {
+		sqlite3_finalize(stmt);
+		return false;
+	}
+
+	sqlite3_step(stmt);
+	sqlite3_finalize(stmt);
+	sqlite3_exec(handle, "END TRANSACTION", nullptr, nullptr, nullptr);
+
+	return true;
+}
+
+bool Database::removeEntriesByPath(const std::string &path)
+{
+	std::lock_guard<std::mutex> lock{mutex};
+
+	sqlite3_exec(handle, "BEGIN TRANSACTION", nullptr, nullptr, nullptr);
+
+	sqlite3_stmt *stmt = nullptr;
+	if (sqlite3_prepare(handle, "DELETE FROM files WHERE parent = ?", -1, &stmt, nullptr) != SQLITE_OK) {
+		return false;
+	}
+
+	if (sqlite3_bind_text(stmt, 1, path.c_str(), -1, nullptr) != SQLITE_OK) {
 		sqlite3_finalize(stmt);
 		return false;
 	}
