@@ -23,6 +23,12 @@
 #include "core/database.hpp"
 #include "core/scanner.hpp"
 
+#if defined(PLATFORM_LINUX)
+	#include "core/watcher_linux.hpp"
+#elif defined(PLATFORM_WINDOWS)
+	#include "core/watcher_windows.hpp"
+#endif
+
 #include "tablemodel.hpp"
 #include "pathsdialog.hpp"
 
@@ -57,6 +63,7 @@ class MainWindow: public QMainWindow
 
 		std::unique_ptr<Database> database = nullptr;
 		std::unique_ptr<Scanner> scanner = nullptr;
+		std::unique_ptr<Watcher> watcher = nullptr;
 
 		std::size_t queryIndex = 0;
 		std::string queryText = {};

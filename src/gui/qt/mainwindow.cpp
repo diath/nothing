@@ -63,18 +63,30 @@ MainWindow::MainWindow(int argc, char **argv)
 	database = std::make_unique<Database>();
 	scanner = std::make_unique<Scanner>(database.get());
 
+	watcher = std::make_unique<Watcher>(database.get());
+	watcher->run();
+
 	if (argc > 1) {
-		for (int i = 0; i < argc; ++i) {
+		for (int i = 1; i < argc; ++i) {
 			scanner->addPath(argv[i]);
+
+			if (!watcher->watch(argv[i])) {
+				std::printf("Failed to add %s to the watcher.\n", argv[i]);
+			}
 		}
 	}
 
 	for (auto &&path: paths) {
 		pathsDialog->addPath(path.toStdString());
 		scanner->addPath(path.toStdString());
+
+		if (!watcher->watch(path.toStdString())) {
+			std::printf("Failed to add %s to the watcher.\n", path.toStdString().c_str());
+		}
 	}
 
 	scanner->run();
+
 	statusBar()->showMessage("Scanning the paths...");
 
 	timer->setSingleShot(true);
